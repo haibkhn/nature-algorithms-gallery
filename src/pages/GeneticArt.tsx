@@ -37,9 +37,12 @@ const GeneticArt: React.FC = () => {
   const handleSettingsChange = (newSettings: any) => {
     setSettings(newSettings);
     if (generator) {
-      // Reinitialize generator with new settings
       setIsGenerating(false);
-      handleCanvasReady(generator.getCanvas());
+      // Wait for next frame to ensure generation has stopped
+      requestAnimationFrame(() => {
+        const canvas = generator.getCanvas();
+        handleCanvasReady(canvas);
+      });
     }
   };
 
@@ -88,15 +91,16 @@ const GeneticArt: React.FC = () => {
     let animationFrame: number;
     const evolve = () => {
       const result = generator.evolve();
-      // Make sure we're getting the fitness value
-      // console.log("Evolution result:", result); // Debug line
 
-      setStats((prev) => ({
-        ...prev,
-        generation: prev.generation + 1,
-        fitness: result.fitness, // Make sure this is being set correctly
-      }));
-      setGeneratedImage(generator.getCanvasImage());
+      // Only update stats if we got valid results
+      if (result && typeof result.fitness === "number") {
+        setStats((prev) => ({
+          ...prev,
+          generation: prev.generation + 1,
+          fitness: result.fitness,
+        }));
+        setGeneratedImage(generator.getCanvasImage());
+      }
 
       if (isGenerating) {
         animationFrame = requestAnimationFrame(evolve);

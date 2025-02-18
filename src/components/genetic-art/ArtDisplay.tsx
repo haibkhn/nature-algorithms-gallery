@@ -111,48 +111,66 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
             </div>
           </div>
         ) : (
-          <div className="relative h-full">
-            {/* Original Image */}
-            <img
-              src={originalImage}
-              alt="Original"
-              className="w-full h-full object-contain"
-              style={{ transform: `scale(${zoom})` }}
-            />
-
-            {/* Generated Art with Clip */}
+          // Overlapping slider view
+          <div className="relative h-full w-full">
+            {/* Bottom layer - Generated Art */}
             {generatedImage && (
+              <img
+                src={generatedImage}
+                alt="Generated"
+                className="absolute inset-0 w-full h-full object-contain"
+                style={{ transform: `scale(${zoom})` }}
+              />
+            )}
+
+            {/* Top layer - Original Image with clip mask */}
+            {originalImage && (
               <div
-                className="absolute top-0 left-0 h-full overflow-hidden"
-                style={{ width: `${sliderPosition}%` }}
+                className="absolute inset-0 overflow-hidden"
+                style={{
+                  clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
+                }}
               >
                 <img
-                  src={generatedImage}
-                  alt="Generated"
-                  className="w-full h-full object-contain"
+                  src={originalImage}
+                  alt="Original"
+                  className="absolute inset-0 w-full h-full object-contain"
                   style={{ transform: `scale(${zoom})` }}
                 />
               </div>
             )}
 
-            {/* Slider Control */}
-            <div className="absolute top-0 left-0 w-full h-full">
+            {/* Slider controls */}
+            <div className="absolute inset-0">
+              {/* Slider line */}
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg"
+                style={{ left: `${sliderPosition}%` }}
+              >
+                {/* Slider handle */}
+                <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center">
+                  <MoveHorizontal className="text-blue-500" size={20} />
+                </div>
+              </div>
+
+              {/* Invisible range input for better control */}
               <input
                 type="range"
                 min="0"
                 max="100"
                 value={sliderPosition}
                 onChange={(e) => setSliderPosition(Number(e.target.value))}
-                className="absolute top-1/2 left-0 w-full"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize"
+                style={{ touchAction: "none" }}
               />
-              <div
-                className="absolute top-0 w-1 h-full bg-blue-500 cursor-ew-resize"
-                style={{ left: `${sliderPosition}%` }}
-              >
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-full p-1 shadow">
-                  <MoveHorizontal size={16} className="text-blue-500" />
-                </div>
-              </div>
+            </div>
+
+            {/* Percentage indicators */}
+            <div className="absolute top-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-white text-sm">
+              Original: {sliderPosition}%
+            </div>
+            <div className="absolute top-2 right-2 bg-black bg-opacity-50 px-2 py-1 rounded text-white text-sm">
+              Generated: {100 - sliderPosition}%
             </div>
           </div>
         )}

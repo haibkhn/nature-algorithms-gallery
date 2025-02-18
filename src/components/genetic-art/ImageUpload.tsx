@@ -1,5 +1,13 @@
+// src/components/genetic-art/ImageUpload.tsx
 import React, { useCallback } from "react";
 import { Upload, Image as ImageIcon } from "lucide-react";
+
+// Sample images array - replace these with your actual image paths
+const SAMPLE_IMAGES = [
+  "/samples/sample1.jpg",
+  "/samples/sample2.jpg",
+  "/samples/sample3.jpg",
+];
 
 interface ImageUploadProps {
   onImageUpload: (imageData: string) => void;
@@ -37,6 +45,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload }) => {
     reader.readAsDataURL(file);
   };
 
+  const loadSampleImage = (imagePath: string) => {
+    // Load the sample image
+    fetch(imagePath)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const file = new File([blob], "sample.jpg", { type: "image/jpeg" });
+        processFile(file);
+      })
+      .catch((error) => console.error("Error loading sample image:", error));
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-4">
       <h2 className="text-lg font-semibold mb-4">Upload Image</h2>
@@ -71,15 +90,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload }) => {
           Or try a sample:
         </h3>
         <div className="grid grid-cols-3 gap-2">
-          {["sample1", "sample2", "sample3"].map((sample) => (
+          {SAMPLE_IMAGES.map((imagePath, index) => (
             <button
-              key={sample}
-              className="p-2 border rounded hover:bg-gray-50"
-              onClick={() => {
-                /* Load sample image */
-              }}
+              key={index}
+              className="aspect-square p-2 border rounded hover:bg-gray-50 relative overflow-hidden"
+              onClick={() => loadSampleImage(imagePath)}
             >
-              <ImageIcon className="w-full h-auto text-gray-400" />
+              <img
+                src={imagePath}
+                alt={`Sample ${index + 1}`}
+                className="w-full h-full object-cover rounded"
+              />
             </button>
           ))}
         </div>
