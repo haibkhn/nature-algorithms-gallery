@@ -4,20 +4,27 @@ import ImageUpload from "../components/genetic-art/ImageUpload";
 import ArtDisplay from "../components/genetic-art/ArtDisplay";
 import ControlPanel from "../components/genetic-art/ControlPanel";
 import GeometricArtGenerator from "../components/genetic-art/algorithms/geometric";
+import PointillismArtGenerator from "../components/genetic-art/algorithms/pointillism";
 
 const GeneticArt: React.FC = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string>("geometric");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generator, setGenerator] = useState<GeometricArtGenerator | null>(
-    null
-  );
+  const [generator, setGenerator] = useState<
+    GeometricArtGenerator | PointillismArtGenerator | null
+  >(null);
   const [settings, setSettings] = useState({
-    numShapes: 200,
+    numShapes: 500,
     mutationRate: 0.1,
-    minSize: 5,
+    minSize: 10,
     maxSize: 50,
+    shapeTypes: ["circle", "rectangle"] as (
+      | "circle"
+      | "rectangle"
+      | "triangle"
+    )[], // Add appropriate shape types
+    populationSize: 50, // Add appropriate population size
   });
   const [stats, setStats] = useState({
     generation: 0,
@@ -33,7 +40,44 @@ const GeneticArt: React.FC = () => {
     setStats({ generation: 0, fitness: 0, shapes: 100 });
   };
 
-  // Update generator when settings change
+  // Reset function
+  const resetGeneration = () => {
+    setIsGenerating(false);
+    setGeneratedImage(null);
+    setStats({ generation: 0, fitness: 0, shapes: settings.numShapes });
+    if (generator) {
+      generator.reset();
+    }
+  };
+
+  // Handle style change
+  const handleStyleChange = (newStyle: string) => {
+    setSelectedStyle(newStyle);
+    setIsGenerating(false);
+    setGeneratedImage(null);
+
+    // Reset settings based on new style
+    const defaultSettings = {
+      numShapes: newStyle === "geometric" ? 500 : 1000, // Reset default shape count
+      mutationRate: 0.1,
+      minSize: 5,
+      maxSize: 50,
+      shapeTypes: ["circle", "rectangle"],
+      populationSize: 50,
+    };
+
+    setSettings(defaultSettings);
+    setStats({ generation: 0, fitness: 0, shapes: defaultSettings.numShapes });
+
+    if (originalImage) {
+      const canvas = generator?.getCanvas();
+      if (canvas) {
+        handleCanvasReady(canvas, newStyle);
+      }
+    }
+  };
+
+  // Handle settings change
   const handleSettingsChange = (newSettings: any) => {
     setSettings(newSettings);
     if (generator) {
@@ -47,7 +91,7 @@ const GeneticArt: React.FC = () => {
   };
 
   // Initialize generator when canvas is ready
-  const handleCanvasReady = (canvas: HTMLCanvasElement) => {
+  const handleCanvasReady = (canvas: HTMLCanvasElement, style?: string) => {
     if (!originalImage) return;
 
     const img = new Image();
@@ -58,28 +102,25 @@ const GeneticArt: React.FC = () => {
       ctx.drawImage(img, 0, 0);
       const imageData = ctx.getImageData(0, 0, img.width, img.height);
 
-      if (generator) {
-        // Reinitialize existing generator
-        generator.reinitialize(canvas, imageData, {
-          numShapes: settings.numShapes,
-          minSize: settings.minSize,
-          maxSize: settings.maxSize,
-          shapeTypes: ["circle", "triangle", "rectangle"],
-          mutationRate: settings.mutationRate,
-          populationSize: 1,
-        });
-      } else {
-        // Create new generator
-        const newGenerator = new GeometricArtGenerator(canvas, imageData, {
-          numShapes: settings.numShapes,
-          minSize: settings.minSize,
-          maxSize: settings.maxSize,
-          shapeTypes: ["circle", "triangle", "rectangle"],
-          mutationRate: settings.mutationRate,
-          populationSize: 1,
-        });
-        setGenerator(newGenerator);
+      // Create appropriate generator based on style
+      const currentStyle = style || selectedStyle;
+      let newGenerator;
+
+      switch (currentStyle) {
+        case "pointillism":
+          newGenerator = new PointillismArtGenerator(
+            canvas,
+            imageData,
+            settings
+          );
+          break;
+        case "geometric":
+        default:
+          newGenerator = new GeometricArtGenerator(canvas, imageData, settings);
+          break;
       }
+
+      setGenerator(newGenerator);
     };
     img.src = originalImage;
   };
@@ -91,16 +132,12 @@ const GeneticArt: React.FC = () => {
     let animationFrame: number;
     const evolve = () => {
       const result = generator.evolve();
-
-      // Only update stats if we got valid results
-      if (result && typeof result.fitness === "number") {
-        setStats((prev) => ({
-          ...prev,
-          generation: prev.generation + 1,
-          fitness: result.fitness,
-        }));
-        setGeneratedImage(generator.getCanvasImage());
-      }
+      setStats((prev) => ({
+        ...prev,
+        generation: prev.generation + 1,
+        fitness: result.fitness,
+      }));
+      setGeneratedImage(generator.getCanvasImage());
 
       if (isGenerating) {
         animationFrame = requestAnimationFrame(evolve);
@@ -123,12 +160,13 @@ const GeneticArt: React.FC = () => {
           <ImageUpload onImageUpload={handleImageUpload} />
           <ControlPanel
             selectedStyle={selectedStyle}
-            onStyleChange={setSelectedStyle}
+            onStyleChange={handleStyleChange}
             isGenerating={isGenerating}
             onGenerationToggle={setIsGenerating}
             hasImage={!!originalImage}
             settings={settings}
             onSettingsChange={handleSettingsChange}
+            onReset={resetGeneration}
           />
         </div>
 
@@ -137,11 +175,7 @@ const GeneticArt: React.FC = () => {
             originalImage={originalImage}
             generatedImage={generatedImage}
             onCanvasReady={handleCanvasReady}
-            stats={{
-              generation: stats.generation,
-              fitness: stats.fitness,
-              shapes: settings.numShapes,
-            }}
+            stats={stats}
           />
         </div>
       </div>
