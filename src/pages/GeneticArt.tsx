@@ -88,10 +88,13 @@ const GeneticArt: React.FC = () => {
     let animationFrame: number;
     const evolve = () => {
       const result = generator.evolve();
+      // Make sure we're getting the fitness value
+      // console.log("Evolution result:", result); // Debug line
+
       setStats((prev) => ({
         ...prev,
         generation: prev.generation + 1,
-        fitness: result.fitness,
+        fitness: result.fitness, // Make sure this is being set correctly
       }));
       setGeneratedImage(generator.getCanvasImage());
 

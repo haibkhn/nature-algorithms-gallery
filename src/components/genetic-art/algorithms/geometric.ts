@@ -25,6 +25,7 @@ class GeometricArtGenerator {
   private targetImageData: ImageData;
   private currentShapes: Shape[] = [];
   private bestFitness: number = 0;
+  private bestShapes: Shape[] = [];
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -100,16 +101,20 @@ class GeometricArtGenerator {
       this.mutateShape(shape)
     );
 
-    // Render both versions and compare fitness
+    // Calculate fitness for both versions
     const currentFitness = this.calculateFitness(this.currentShapes);
     const mutatedFitness = this.calculateFitness(mutatedShapes);
 
-    // Keep the better version
-    if (mutatedFitness > currentFitness) {
-      this.currentShapes = mutatedShapes;
+    // Keep track of the best solution
+    if (mutatedFitness > this.bestFitness) {
       this.bestFitness = mutatedFitness;
+      this.bestShapes = [...mutatedShapes];
+      this.currentShapes = mutatedShapes;
+    } else if (mutatedFitness > currentFitness) {
+      this.currentShapes = mutatedShapes;
     }
 
+    // Always return the best fitness we've found
     return {
       shapes: this.currentShapes,
       fitness: this.bestFitness,
@@ -253,9 +258,7 @@ class GeometricArtGenerator {
     this.ctx = canvas.getContext("2d")!;
     this.targetImageData = targetImageData;
     this.settings = settings;
-    this.currentShapes = [];
-    this.bestFitness = 0;
-    this.initializeShapes();
+    this.reset();
   }
 
   private calculateFitness(shapes: Shape[]): number {
@@ -279,25 +282,29 @@ class GeometricArtGenerator {
 
     // Compare each pixel's RGB values
     for (let i = 0; i < currentImageData.length; i += 4) {
-      // Get color differences for each channel
       const rDiff = Math.abs(currentImageData[i] - targetData[i]);
       const gDiff = Math.abs(currentImageData[i + 1] - targetData[i + 1]);
       const bDiff = Math.abs(currentImageData[i + 2] - targetData[i + 2]);
 
-      // Weight the colors based on human perception
-      // Uses perceived brightness weights: R: 0.299, G: 0.587, B: 0.114
-      const weightedDiff =
-        (rDiff * 0.299 + gDiff * 0.587 + bDiff * 0.114) / 255;
+      // Normalize differences to 0-1 range and weight them
+      const normalizedDiff =
+        (rDiff / 255) * 0.299 + (gDiff / 255) * 0.587 + (bDiff / 255) * 0.114;
 
-      totalDifference += weightedDiff;
+      totalDifference += normalizedDiff;
     }
 
     // Calculate fitness (0 to 1, where 1 is perfect match)
     const averageDifference = totalDifference / totalPixels;
     const fitness = 1 - averageDifference;
 
-    // console.log("Raw fitness:", fitness); // Debug line
-    return fitness;
+    // Ensure we return a valid number between 0 and 1
+    return Math.max(0, Math.min(1, fitness));
+  }
+
+  public reset() {
+    this.bestFitness = 0;
+    this.bestShapes = [];
+    this.initializeShapes();
   }
 
   private mutateShape(shape: Shape): Shape {
