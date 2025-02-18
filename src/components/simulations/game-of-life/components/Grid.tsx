@@ -1,15 +1,38 @@
 // src/components/simulations/game-of-life/components/Grid.tsx
-import React, { useRef, useState, useEffect, useCallback } from "react";
-import { Maximize2 } from "lucide-react";
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+import { Maximize2, MousePointer, MousePointerClick, Move } from "lucide-react";
 import { GridProps } from "../types";
 
-const Grid: React.FC<GridProps> = ({ grid, toggleCell }) => {
+export interface GridHandle {
+  centerGrid: () => void;
+}
+
+const Grid = forwardRef<GridHandle, GridProps>(({ grid, toggleCell }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [cellSize] = useState(20);
+  // Add state for helper visibility
+  const [showHelper, setShowHelper] = useState(true); // Show by default, auto-hide after a while
+
+  // Auto-hide helper after 10 seconds
+  useEffect(() => {
+    if (showHelper) {
+      const timer = setTimeout(() => {
+        setShowHelper(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [showHelper]);
 
   // Function to constrain position within grid boundaries
   const constrainPosition = useCallback(
@@ -62,6 +85,15 @@ const Grid: React.FC<GridProps> = ({ grid, toggleCell }) => {
   useEffect(() => {
     centerGrid();
   }, []); // Empty dependency array = only run once on mount
+
+  // Expose centerGrid method through ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      centerGrid,
+    }),
+    [centerGrid]
+  );
 
   // Handle mouse wheel for zooming
   const handleWheel = useCallback(
@@ -183,6 +215,13 @@ const Grid: React.FC<GridProps> = ({ grid, toggleCell }) => {
       {/* Controls */}
       <div className="absolute bottom-4 right-4 flex gap-2">
         <button
+          onClick={() => setShowHelper(true)}
+          className="bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-gray-100"
+          title="Show controls"
+        >
+          ?
+        </button>
+        <button
           onClick={centerGrid}
           className="bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-gray-100"
           title="Center grid"
@@ -210,8 +249,43 @@ const Grid: React.FC<GridProps> = ({ grid, toggleCell }) => {
           -
         </button>
       </div>
+      {/* Helper Overlay */}
+      {showHelper && (
+        <div className="absolute top-4 left-4 bg-white/90 p-4 rounded-lg shadow-lg max-w-xs">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="font-semibold text-lg">Controls</h3>
+            <button
+              onClick={() => setShowHelper(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ×
+            </button>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-2">
+              <MousePointerClick size={16} className="text-blue-500" />
+              <span>Left click to toggle cells</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Move size={16} className="text-blue-500" />
+              <span>Right click + drag to pan</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MousePointer size={16} className="text-blue-500" />
+              <span>Mouse wheel to zoom</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Maximize2 size={16} className="text-blue-500" />
+              <span>Click center button to fit view</span>
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-gray-500">
+            This helper will auto-hide in a few seconds
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+});
 
 export default Grid;

@@ -24,7 +24,7 @@ export interface PatternPlacement {
 export interface Scenario {
   name: string;
   description: string;
-  gridSize: GridSize;
+  // gridSize: GridSize;
   patterns: PatternPlacement[];
 }
 

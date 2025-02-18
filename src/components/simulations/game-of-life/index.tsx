@@ -1,6 +1,6 @@
 // src/components/simulations/game-of-life/index.tsx
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import Grid from "./components/Grid";
+import Grid, { GridHandle } from "./components/Grid";
 import Controls from "./components/Controls";
 import StatsPanel from "./components/StatsPanel";
 import HelpModal from "./components/HelpModal";
@@ -9,7 +9,7 @@ import { Grid as GridType, GridSize, PopulationData } from "./types";
 
 const GameOfLife: React.FC = () => {
   // Initialize with a larger grid
-  const [gridSize] = useState<GridSize>({ rows: 100, cols: 100 });
+  const [gridSize] = useState<GridSize>({ rows: 100, cols: 200 });
   const [grid, setGrid] = useState<GridType>(() => createEmptyGrid(gridSize));
   const [isRunning, setIsRunning] = useState(false);
   const [speed, setSpeed] = useState(100);
@@ -19,6 +19,8 @@ const GameOfLife: React.FC = () => {
   );
   const [showHelp, setShowHelp] = useState(false);
   const runningRef = useRef(isRunning);
+  const gridRef = useRef<GridHandle>(null);
+
   runningRef.current = isRunning;
 
   // Create empty grid
@@ -47,10 +49,14 @@ const GameOfLife: React.FC = () => {
     });
   };
 
-  // Load scenario
+  // Update loadScenario
   const loadScenario = (scenarioKey: string): void => {
     const scenario = SCENARIOS[scenarioKey];
     if (!scenario) return;
+
+    // Stop simulation if running
+    setIsRunning(false);
+    runningRef.current = false;
 
     // Clear the grid first
     setGrid(createEmptyGrid(gridSize));
@@ -61,6 +67,11 @@ const GameOfLife: React.FC = () => {
     scenario.patterns.forEach(({ pattern, position }) => {
       placePattern(pattern, position.x, position.y);
     });
+
+    // Use setTimeout to ensure the grid is updated before centering
+    setTimeout(() => {
+      gridRef.current?.centerGrid();
+    }, 0);
   };
 
   // Count live cells
@@ -144,22 +155,27 @@ const GameOfLife: React.FC = () => {
     });
   };
 
-  // Random grid
+  // Update randomGrid
   const randomGrid = (): void => {
     const newGrid = createEmptyGrid(gridSize);
-    // Only randomize a 40x40 area in the center
-    const centerStartRow = Math.floor((gridSize.rows - 40) / 2);
-    const centerStartCol = Math.floor((gridSize.cols - 40) / 2);
+    const randomSize = 40;
+    const centerRow = Math.floor((gridSize.rows - randomSize) / 2);
+    const centerCol = Math.floor((gridSize.cols - randomSize) / 2);
 
-    for (let i = 0; i < 40; i++) {
-      for (let j = 0; j < 40; j++) {
-        newGrid[centerStartRow + i][centerStartCol + j] = Math.random() > 0.7;
+    for (let i = 0; i < randomSize; i++) {
+      for (let j = 0; j < randomSize; j++) {
+        newGrid[centerRow + i][centerCol + j] = Math.random() > 0.7;
       }
     }
 
     setGrid(newGrid);
     setGeneration(0);
     setPopulationHistory([]);
+
+    // Center after random generation
+    setTimeout(() => {
+      gridRef.current?.centerGrid();
+    }, 0);
   };
 
   // Clear grid
@@ -174,7 +190,11 @@ const GameOfLife: React.FC = () => {
       {/* Left side - Grid and Stats */}
       <div className="flex-1 min-w-0 flex flex-col">
         <div className="flex-1 min-h-[500px] bg-white rounded-lg">
-          <Grid grid={grid} toggleCell={toggleCell} />
+          <Grid
+            ref={gridRef} // Add the ref here
+            grid={grid}
+            toggleCell={toggleCell}
+          />
         </div>
         <div className="mt-4">
           <StatsPanel
@@ -196,7 +216,12 @@ const GameOfLife: React.FC = () => {
               runSimulation();
             }
           }}
-          onClear={clearGrid}
+          onClear={() => {
+            setGrid(createEmptyGrid(gridSize));
+            setGeneration(0);
+            setPopulationHistory([]);
+            gridRef.current?.centerGrid(); // Center after clearing
+          }}
           onRandom={randomGrid}
           speed={speed}
           onSpeedChange={setSpeed}
