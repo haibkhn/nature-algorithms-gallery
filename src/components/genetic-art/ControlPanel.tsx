@@ -8,6 +8,13 @@ interface ControlPanelProps {
   isGenerating: boolean;
   onGenerationToggle: (isGenerating: boolean) => void;
   hasImage: boolean;
+  settings: {
+    numShapes: number;
+    mutationRate: number;
+    minSize: number;
+    maxSize: number;
+  };
+  onSettingsChange: (settings: any) => void;
 }
 
 const STYLES = [
@@ -44,117 +51,94 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   isGenerating,
   onGenerationToggle,
   hasImage,
+  settings,
+  onSettingsChange,
 }) => {
   return (
     <div className="bg-white rounded-lg shadow p-4 space-y-6">
-      {/* Styles Selection */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Art Style</h2>
-        <div className="space-y-2">
-          {STYLES.map((style) => (
-            <button
-              key={style.id}
-              className={`w-full p-3 text-left rounded-lg transition-colors ${
-                selectedStyle === style.id
-                  ? "bg-blue-50 border border-blue-200"
-                  : "hover:bg-gray-50 border border-transparent"
-              }`}
-              onClick={() => onStyleChange(style.id)}
-            >
-              <div className="font-medium">{style.name}</div>
-              <div className="text-sm text-gray-600">{style.description}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Style-specific Settings */}
+      {/* Style Selection */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Settings</h2>
-        {/* Brush Strokes Settings */}
-        {selectedStyle === "brush-strokes" && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Number of Strokes
-              </label>
-              <input type="range" min="50" max="1000" className="w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Max Stroke Length
-              </label>
-              <input type="range" min="10" max="100" className="w-full" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stroke Width Range
-              </label>
-              <div className="flex gap-2">
-                <input type="range" min="1" max="20" className="w-full" />
-                <input type="range" min="5" max="40" className="w-full" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Curvature
-              </label>
-              <input type="range" min="0" max="100" className="w-full" />
-            </div>
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <input type="checkbox" className="rounded" />
-                Follow Edge Direction
-              </label>
-            </div>
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <input type="checkbox" className="rounded" />
-                Use Image Colors
-              </label>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Brush Style
-              </label>
-              <select className="w-full rounded border-gray-300">
-                <option value="round">Round</option>
-                <option value="flat">Flat</option>
-                <option value="textured">Textured</option>
-                <option value="calligraphy">Calligraphy</option>
-              </select>
-            </div>
+        <div className="space-y-4">
+          {/* Number of Shapes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Number of Shapes: {settings.numShapes}
+            </label>
+            <input
+              type="range"
+              min="50"
+              max="1000"
+              value={settings.numShapes}
+              onChange={(e) =>
+                onSettingsChange({
+                  ...settings,
+                  numShapes: parseInt(e.target.value),
+                })
+              }
+              className="w-full"
+              disabled={isGenerating}
+            />
           </div>
-        )}
-        {selectedStyle === "geometric" && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Number of Shapes
-              </label>
-              <input
-                type="range"
-                min="50"
-                max="500"
-                className="w-full"
-                // Add value and onChange handlers
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mutation Rate
-              </label>
+
+          {/* Mutation Rate */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Mutation Rate: {(settings.mutationRate * 100).toFixed(0)}%
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="50"
+              value={settings.mutationRate * 100}
+              onChange={(e) =>
+                onSettingsChange({
+                  ...settings,
+                  mutationRate: parseInt(e.target.value) / 100,
+                })
+              }
+              className="w-full"
+              disabled={isGenerating}
+            />
+          </div>
+
+          {/* Shape Size Range */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Shape Size Range: {settings.minSize} - {settings.maxSize}
+            </label>
+            <div className="flex gap-2">
               <input
                 type="range"
                 min="1"
-                max="100"
+                max="50"
+                value={settings.minSize}
+                onChange={(e) =>
+                  onSettingsChange({
+                    ...settings,
+                    minSize: parseInt(e.target.value),
+                  })
+                }
                 className="w-full"
-                // Add value and onChange handlers
+                disabled={isGenerating}
+              />
+              <input
+                type="range"
+                min="10"
+                max="100"
+                value={settings.maxSize}
+                onChange={(e) =>
+                  onSettingsChange({
+                    ...settings,
+                    maxSize: parseInt(e.target.value),
+                  })
+                }
+                className="w-full"
+                disabled={isGenerating}
               />
             </div>
           </div>
-        )}
-        {/* Add more style-specific settings */}
+        </div>
       </div>
 
       {/* Generation Controls */}
@@ -179,18 +163,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 <Play size={18} /> Start Generation
               </>
             )}
-          </button>
-          <button
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border hover:bg-gray-50"
-            disabled={!hasImage}
-          >
-            <Save size={18} /> Save Result
-          </button>
-          <button
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border hover:bg-gray-50"
-            disabled={!hasImage}
-          >
-            <RotateCcw size={18} /> Reset
           </button>
         </div>
       </div>

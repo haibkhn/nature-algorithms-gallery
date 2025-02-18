@@ -1,20 +1,37 @@
 // src/components/genetic-art/ArtDisplay.tsx
-import React, { useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { MoveHorizontal, ZoomIn, ZoomOut } from "lucide-react";
 
 interface ArtDisplayProps {
   originalImage: string | null;
-  generatedArt: string | null;
+  generatedImage: string | null;
+  onCanvasReady: (canvas: HTMLCanvasElement) => void;
+  stats: {
+    generation: number;
+    fitness: number;
+    shapes: number;
+  };
 }
 
 const ArtDisplay: React.FC<ArtDisplayProps> = ({
   originalImage,
-  generatedArt,
+  generatedImage,
+  onCanvasReady,
+  stats,
 }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [compareMode, setCompareMode] = useState<"side-by-side" | "slider">(
     "side-by-side"
   );
   const [sliderPosition, setSliderPosition] = useState(50);
+  const [zoom, setZoom] = useState(1);
+
+  // Initialize canvas when component mounts
+  useEffect(() => {
+    if (canvasRef.current) {
+      onCanvasReady(canvasRef.current);
+    }
+  }, [onCanvasReady]);
 
   if (!originalImage) {
     return (
@@ -27,7 +44,7 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
   return (
     <div className="h-full flex flex-col">
       {/* Display Controls */}
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-between items-center mb-4">
         <div className="flex gap-2">
           <button
             className={`px-3 py-1 rounded ${
@@ -47,32 +64,44 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
           </button>
         </div>
         <div className="flex gap-2">
-          <button className="p-1 hover:bg-gray-100 rounded">
+          <button
+            className="p-1 hover:bg-gray-100 rounded"
+            onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
+          >
             <ZoomOut size={20} />
           </button>
-          <button className="p-1 hover:bg-gray-100 rounded">
+          <button
+            className="p-1 hover:bg-gray-100 rounded"
+            onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
+          >
             <ZoomIn size={20} />
           </button>
         </div>
       </div>
 
-      {/* Image Display */}
-      <div className="flex-1 relative border rounded-lg overflow-hidden">
+      {/* Canvas and Image Display */}
+      <div className="flex-1 relative border rounded-lg overflow-hidden bg-gray-50">
+        {/* Hidden canvas for generation */}
+        <canvas ref={canvasRef} className="hidden" />
+
+        {/* Visible display */}
         {compareMode === "side-by-side" ? (
           <div className="flex h-full">
-            <div className="flex-1 border-r">
+            <div className="flex-1 border-r relative overflow-hidden">
               <img
                 src={originalImage}
                 alt="Original"
                 className="w-full h-full object-contain"
+                style={{ transform: `scale(${zoom})` }}
               />
             </div>
-            <div className="flex-1">
-              {generatedArt ? (
+            <div className="flex-1 relative overflow-hidden">
+              {generatedImage ? (
                 <img
-                  src={generatedArt}
+                  src={generatedImage}
                   alt="Generated"
                   className="w-full h-full object-contain"
+                  style={{ transform: `scale(${zoom})` }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-500">
@@ -88,18 +117,20 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
               src={originalImage}
               alt="Original"
               className="w-full h-full object-contain"
+              style={{ transform: `scale(${zoom})` }}
             />
 
             {/* Generated Art with Clip */}
-            {generatedArt && (
+            {generatedImage && (
               <div
                 className="absolute top-0 left-0 h-full overflow-hidden"
                 style={{ width: `${sliderPosition}%` }}
               >
                 <img
-                  src={generatedArt}
+                  src={generatedImage}
                   alt="Generated"
                   className="w-full h-full object-contain"
+                  style={{ transform: `scale(${zoom})` }}
                 />
               </div>
             )}
@@ -128,13 +159,22 @@ const ArtDisplay: React.FC<ArtDisplayProps> = ({
       </div>
 
       {/* Generation Stats */}
-      {generatedArt && (
-        <div className="mt-4 flex justify-between text-sm text-gray-600">
-          <div>Generation: 42</div>
-          <div>Fitness: 85%</div>
-          <div>Shapes: 150</div>
+      <div className="mt-4 grid grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div className="text-center">
+          <div className="text-sm text-gray-600">Generation</div>
+          <div className="text-xl font-semibold">{stats.generation}</div>
         </div>
-      )}
+        <div className="text-center">
+          <div className="text-sm text-gray-600">Fitness</div>
+          <div className="text-xl font-semibold">
+            {stats.fitness ? (stats.fitness * 100).toFixed(1) : 0}%
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="text-sm text-gray-600">Shapes</div>
+          <div className="text-xl font-semibold">{stats.shapes}</div>
+        </div>
+      </div>
     </div>
   );
 };
