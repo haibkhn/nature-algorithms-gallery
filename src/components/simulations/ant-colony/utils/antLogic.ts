@@ -112,13 +112,13 @@ function calculateNewDirection(
   // Find the strongest pheromone reading
   const maxPheromone = Math.max(...sensors.map((s) => s.pheromone));
 
-  // Stronger pheromone influence
+  // Much stronger pheromone influence
   const weightedDirection = sensors.reduce((sum, sensor) => {
-    const weight = Math.pow(sensor.pheromone / (maxPheromone || 1), 2); // Quadratic weighting
-    return sum + sensor.angle * weight * settings.pheromoneStrength * 2;
+    // Cubic weighting to make strong trails even more attractive
+    const weight = Math.pow(sensor.pheromone / (maxPheromone || 1), 3);
+    return sum + sensor.angle * weight * settings.pheromoneStrength * 3;
   }, 0);
 
-  // When ant has food, bias movement towards nest
   let homewardBias = 0;
   if (ant.hasFood) {
     const nestDirection = Math.atan2(
@@ -129,8 +129,9 @@ function calculateNewDirection(
     homewardBias = directionDiff * 0.7;
   }
 
-  // Much less random movement when on strong trails
-  const randomScale = maxPheromone > 0.3 ? 0.02 : 0.6;
+  // Almost no randomness when on strong trails
+  // Lower threshold (0.1) to make ants follow even weaker trails
+  const randomScale = maxPheromone > 0.1 ? 0.01 : 0.5;
   const randomness = (Math.random() - 0.5) * Math.PI * 0.5 * randomScale;
 
   let newDirection = ant.direction;
@@ -139,11 +140,12 @@ function calculateNewDirection(
     // Strong home bias when carrying food
     newDirection +=
       homewardBias * 0.7 + weightedDirection * 0.25 + randomness * 0.05;
-  } else if (maxPheromone > 0.2) {
-    // Very strong trail following
-    newDirection += weightedDirection * 0.9 + randomness * 0.1;
+  } else if (maxPheromone > 0.1) {
+    // Lower threshold for following trails
+    // Even stronger trail following (0.95 weight to trail)
+    newDirection += weightedDirection * 0.95 + randomness * 0.05;
   } else {
-    // More exploration when no strong trails
+    // Normal exploration when no trails
     newDirection += weightedDirection * 0.3 + randomness * 0.7;
   }
 
@@ -240,13 +242,14 @@ export function addPheromone(
 
     if (type === "home") {
       cell.homePheromone = Math.min(
-        3, // Increased max pheromone level
+        3,
         cell.homePheromone + amount * distanceScale
       );
     } else {
+      // Much higher max level for food pheromones
       cell.foodPheromone = Math.min(
-        4, // Higher max level for food pheromones
-        cell.foodPheromone + amount * 2 * distanceScale
+        6, // Increased from 4
+        cell.foodPheromone + amount * 3 * distanceScale // Increased multiplier
       );
     }
     return newGrid;

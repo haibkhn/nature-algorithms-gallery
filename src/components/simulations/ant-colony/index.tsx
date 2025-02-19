@@ -19,11 +19,11 @@ import { calculateStats, evaluatePathEfficiency } from "./utils/statsHelper";
 const DEFAULT_SETTINGS: AntColonySettings = {
   type: "ant-colony",
   numberOfAnts: 50,
-  pheromoneStrength: 1.0,
-  pheromoneEvaporation: 0.005,
+  pheromoneStrength: 2.5,
+  pheromoneEvaporation: 0.002,
   antSpeed: 1.0,
-  sensorDistance: 20,
-  sensorAngle: Math.PI / 4,
+  sensorDistance: 30,
+  sensorAngle: Math.PI / 3,
   foodAmount: 100,
 };
 
@@ -165,11 +165,9 @@ const AntColony: React.FC = () => {
       const updatedAnts = currentAnts.map((ant) => {
         const updatedAnt = updateAnt(ant, grid, food, settings);
 
-        // Lay stronger pheromones when food is found
         if (updatedAnt.hasFood !== ant.hasFood || updatedAnt.hasFood) {
           if (updatedAnt.hasFood && !ant.hasFood) {
-            // When food is first found, lay a very strong food pheromone trail
-            // This will strongly attract other ants to this successful path
+            // Much stronger initial food trail
             const backtrackPath = [...ant.path].reverse();
             backtrackPath.forEach((pos, index) => {
               setGrid((prev) =>
@@ -178,13 +176,12 @@ const AntColony: React.FC = () => {
                   pos,
                   "food",
                   settings.pheromoneStrength *
-                    3 *
+                    5 *
                     (1 - index / backtrackPath.length)
                 )
               );
             });
           } else if (updatedAnt.hasFood) {
-            // When returning with food, lay home pheromone
             setGrid((prev) =>
               addPheromone(
                 prev,
