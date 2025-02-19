@@ -8,12 +8,13 @@ import GeneticArt from "./pages/GeneticArt";
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/">
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/simulations" element={<Simulations />} />
           <Route path="/genetic-art" element={<GeneticArt />} />
+          <Route path="*" element={<Home />} /> {/* Catch-all route */}
         </Routes>
       </Layout>
     </BrowserRouter>
