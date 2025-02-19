@@ -50,6 +50,7 @@ export interface ControlsProps {
   onSettingsChange: (settings: FlockingSettings) => void;
   onReset: () => void;
   onScatter: () => void;
+  onShowTutorial: () => void;
 }
 
 export interface StatsPanelProps {

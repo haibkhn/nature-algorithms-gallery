@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import GameOfLife from "../components/simulations/game-of-life";
 import Boids from "../components/simulations/boids";
+import AntColony from "../components/simulations/ant-colony";
 import { SimulationMap } from "@/types/simulation";
 
 interface Simulation {
@@ -28,8 +29,8 @@ const SIMULATIONS: SimulationMap = {
   },
   antColony: {
     title: "Ant Colony",
-    description: "Ant colony optimization simulation (Coming Soon)",
-    component: null,
+    description: "Ant colony optimization simulation",
+    component: AntColony,
     tags: ["Pathfinding", "Swarm"],
   },
 };

@@ -1,17 +1,45 @@
 // src/components/simulations/boids/components/Controls.tsx
-import React from "react";
+import React, { useState } from "react";
 import { Play, Pause, RefreshCw, Maximize2 } from "lucide-react";
 import { ControlsProps, FlockingSettings } from "../types";
 
-interface ControlsProps {
-  isRunning: boolean;
-  onToggleRun: () => void;
-  settings: FlockingSettings;
-  onSettingsChange: (settings: FlockingSettings) => void;
-  onReset: () => void;
-  onScatter: () => void;
-  onShowTutorial: () => void;
+interface TooltipInfo {
+  title: string;
+  description: string;
 }
+
+const PARAMETER_INFO: Record<keyof FlockingSettings, TooltipInfo> = {
+  alignmentForce: {
+    title: "Alignment",
+    description:
+      "Boids will try to align their velocity with the average velocity of their neighbors",
+  },
+  cohesionForce: {
+    title: "Cohesion",
+    description:
+      "Boids will try to move towards the average position of their neighbors",
+  },
+  separationForce: {
+    title: "Separation",
+    description:
+      "Boids will try to maintain a minimum distance from their neighbors",
+  },
+  mouseForce: {
+    title: "Mouse Force",
+    description:
+      "The force with which boids are attracted to or repelled from the mouse cursor",
+  },
+  mouseRadius: {
+    title: "Mouse Radius",
+    description:
+      "The radius around the mouse cursor within which boids will be attracted to or repelled from it",
+  },
+  predatorForce: {
+    title: "Predator Force",
+    description:
+      "The force with which predators chase nearby boids, causing them to flee",
+  },
+};
 
 const Controls: React.FC<ControlsProps> = ({
   isRunning,
@@ -32,6 +60,8 @@ const Controls: React.FC<ControlsProps> = ({
     });
   };
 
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+
   // Slider control component with safe value handling
   const Slider = ({
     label,
@@ -42,6 +72,7 @@ const Controls: React.FC<ControlsProps> = ({
     step = 0.1,
     disabled = false,
     id,
+    tooltip,
   }: {
     label: string;
     value: number;
@@ -51,30 +82,56 @@ const Controls: React.FC<ControlsProps> = ({
     step?: number;
     disabled?: boolean;
     id: string;
-  }) => (
-    <div className="space-y-1">
-      <div className="flex justify-between items-center">
-        <label htmlFor={id} className="text-sm text-gray-600">
-          {label}
-        </label>
-        <span className="text-sm font-mono text-gray-500">
-          {(typeof value === "number" ? value : 0).toFixed(1)}
-        </span>
+    tooltip?: TooltipInfo;
+  }) => {
+    const [hovered, setHovered] = useState(false);
+
+    return (
+      <div className="space-y-1 relative">
+        {/* Wrap label + tooltip in a parent div for better hover detection */}
+        <div
+          className="relative flex justify-between items-center w-full"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          {/* Label on the left */}
+          <label
+            htmlFor={id}
+            className="text-sm text-gray-600 cursor-help flex-1"
+          >
+            {label}
+          </label>
+
+          {/* Current value on the right */}
+          <span className="text-sm font-mono text-gray-500 min-w-[40px] text-right">
+            {(typeof value === "number" ? value : 0).toFixed(1)}
+          </span>
+
+          {/* Tooltip should only appear when hovered */}
+          {hovered && tooltip && (
+            <div className="absolute z-10 bg-black text-white text-sm rounded px-3 py-2 -top-12 left-1/2 transform -translate-x-1/2 w-max max-w-xs whitespace-normal break-words">
+              {tooltip?.description ?? "No description available"}
+              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-black rotate-45"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Slider Input */}
+        <input
+          id={id}
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={typeof value === "number" ? value : 0}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          disabled={disabled}
+          className="w-full"
+          aria-label={label}
+        />
       </div>
-      <input
-        id={id}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={typeof value === "number" ? value : 0}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        disabled={disabled}
-        className="w-full"
-        aria-label={label}
-      />
-    </div>
-  );
+    );
+  };
 
   // Early return if settings are not initialized
   if (!settings) {
@@ -126,9 +183,6 @@ const Controls: React.FC<ControlsProps> = ({
       {/* Simulation Controls */}
       <div className="space-y-4">
         <h3 className="font-semibold text-gray-700">Simulation Controls</h3>
-        <div className="flex gap-2">
-          {/* ... existing control buttons ... */}
-        </div>
 
         {/* Add Number of Boids Slider */}
         <Slider
@@ -152,6 +206,7 @@ const Controls: React.FC<ControlsProps> = ({
           min={0}
           max={2}
           disabled={isRunning}
+          tooltip={PARAMETER_INFO.alignmentForce}
         />
 
         <Slider
@@ -162,6 +217,7 @@ const Controls: React.FC<ControlsProps> = ({
           min={0}
           max={2}
           disabled={isRunning}
+          tooltip={PARAMETER_INFO.cohesionForce}
         />
 
         <Slider
@@ -172,6 +228,7 @@ const Controls: React.FC<ControlsProps> = ({
           min={0}
           max={2}
           disabled={isRunning}
+          tooltip={PARAMETER_INFO.separationForce}
         />
       </div>
 
@@ -226,6 +283,7 @@ const Controls: React.FC<ControlsProps> = ({
           min={0}
           max={2}
           disabled={settings.mouseInteraction === "none" || isRunning}
+          tooltip={PARAMETER_INFO.mouseForce}
         />
 
         <Slider
@@ -237,6 +295,7 @@ const Controls: React.FC<ControlsProps> = ({
           max={200}
           step={1}
           disabled={settings.mouseInteraction === "none" || isRunning}
+          tooltip={PARAMETER_INFO.mouseRadius}
         />
       </div>
 
@@ -262,6 +321,7 @@ const Controls: React.FC<ControlsProps> = ({
           min={0}
           max={2}
           disabled={settings.numberOfPredators === 0 || isRunning}
+          tooltip={PARAMETER_INFO.predatorForce}
         />
       </div>
 

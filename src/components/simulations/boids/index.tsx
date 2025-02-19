@@ -51,7 +51,7 @@ const Boids: React.FC = () => {
 
   // Initialize boids
   const initializeBoids = useCallback(() => {
-    console.log("Initializing boids...");
+    // console.log("Initializing boids...");
     const newBoids: Boid[] = [];
 
     // Regular boids
@@ -90,7 +90,7 @@ const Boids: React.FC = () => {
       });
     }
 
-    console.log("Created boids:", newBoids.length);
+    // console.log("Created boids:", newBoids.length);
     setBoids(newBoids);
   }, [
     settings.numberOfBoids,
@@ -293,7 +293,7 @@ const Boids: React.FC = () => {
 
   // Initialize on mount
   useEffect(() => {
-    console.log("Component mounted"); // Debug log
+    // console.log("Component mounted"); // Debug log
     initializeBoids();
     return () => {
       if (animationFrameRef.current) {
@@ -305,7 +305,7 @@ const Boids: React.FC = () => {
   // Start/stop animation
   useEffect(() => {
     if (isRunning) {
-      console.log("Starting simulation"); // Debug log
+      // console.log("Starting simulation"); // Debug log
       updateSimulation();
     }
     return () => {
