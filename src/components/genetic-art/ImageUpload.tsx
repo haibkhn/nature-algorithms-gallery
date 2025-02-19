@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { Upload, Image as ImageIcon } from "lucide-react";
+import { Upload } from "lucide-react";
 
 // Sample images array
 const SAMPLE_IMAGES = [

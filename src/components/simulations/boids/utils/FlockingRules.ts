@@ -223,7 +223,7 @@ export function calculateCohesion(
   boids: Boid[],
   settings: FlockingSettings
 ): Vector {
-  let centerOfMass = { x: 0, y: 0 };
+  const centerOfMass = { x: 0, y: 0 };
   let total = 0;
 
   boids.forEach((other) => {
@@ -326,7 +326,7 @@ export function calculateFlockStats(boids: Boid[]): {
   groupCount: number;
 } {
   let totalSpeed = 0;
-  let averageHeading = { x: 0, y: 0 };
+  const averageHeading = { x: 0, y: 0 };
 
   // Calculate average speed and heading
   boids.forEach((boid) => {

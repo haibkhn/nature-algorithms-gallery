@@ -6,7 +6,6 @@ import {
   YAxis,
   ResponsiveContainer,
   Tooltip,
-  Legend,
 } from "recharts";
 import { StatsPanelProps } from "../types";
 

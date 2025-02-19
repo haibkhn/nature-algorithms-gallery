@@ -7,13 +7,11 @@ import {
   Ant,
   Food,
   Grid,
-  GridCell,
-  Position,
   AntColonySettings,
   Stats,
 } from "./types";
 import { updateAnt, updatePheromones, addPheromone } from "./utils/antLogic";
-import { calculateStats, evaluatePathEfficiency } from "./utils/statsHelper";
+import { calculateStats } from "./utils/statsHelper";
 
 const DEFAULT_SETTINGS: AntColonySettings = {
   type: "ant-colony",

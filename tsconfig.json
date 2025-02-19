@@ -18,12 +18,16 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthrough": true,
+    "noImplicitReturns": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+
+    /* Paths */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "*.config.js", "*.config.ts", "eslint.config.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

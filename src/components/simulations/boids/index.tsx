@@ -4,9 +4,6 @@ import Controls from "./components/Controls";
 import StatsPanel from "./components/StatsPanel";
 import { Boid, FlockingSettings, FlockStats, Vector } from "./types";
 import {
-  calculateAlignment,
-  calculateCohesion,
-  calculateSeparation,
   calculateFlockingForces,
 } from "./utils/FlockingRules";
 import Tutorial from "./components/Tutorial";
