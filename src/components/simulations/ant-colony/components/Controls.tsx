@@ -281,7 +281,7 @@ const Controls: React.FC<ControlsProps> = ({
           value={settings.pheromoneStrength}
           onChange={(value) => handleSettingChange("pheromoneStrength", value)}
           min={0.1}
-          max={2}
+          max={3}
           disabled={isRunning}
           tooltip={PARAMETER_INFO.pheromoneStrength}
         />

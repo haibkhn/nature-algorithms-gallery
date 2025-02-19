@@ -19,8 +19,8 @@ import { calculateStats, evaluatePathEfficiency } from "./utils/statsHelper";
 const DEFAULT_SETTINGS: AntColonySettings = {
   type: "ant-colony",
   numberOfAnts: 50,
-  pheromoneStrength: 2.5,
-  pheromoneEvaporation: 0.002,
+  pheromoneStrength: 1.5,
+  pheromoneEvaporation: 0.005,
   antSpeed: 1.0,
   sensorDistance: 30,
   sensorAngle: Math.PI / 3,
