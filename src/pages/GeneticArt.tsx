@@ -5,6 +5,9 @@ import ArtDisplay from "../components/genetic-art/ArtDisplay";
 import ControlPanel from "../components/genetic-art/ControlPanel";
 import GeometricArtGenerator from "../components/genetic-art/algorithms/geometric";
 import PointillismArtGenerator from "../components/genetic-art/algorithms/pointillism";
+import MosaicArtGenerator from "../components/genetic-art/algorithms/mosaic";
+import StainedGlassGenerator from "../components/genetic-art/algorithms/stainedGlass";
+import { ArtSettings, getDefaultSettings } from "../types/settings";
 
 const GeneticArt: React.FC = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -12,24 +15,19 @@ const GeneticArt: React.FC = () => {
   const [selectedStyle, setSelectedStyle] = useState<string>("geometric");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generator, setGenerator] = useState<
-    GeometricArtGenerator | PointillismArtGenerator | null
+    | GeometricArtGenerator
+    | PointillismArtGenerator
+    | MosaicArtGenerator
+    | StainedGlassGenerator
+    | null
   >(null);
-  const [settings, setSettings] = useState({
-    numShapes: 500,
-    mutationRate: 0.1,
-    minSize: 10,
-    maxSize: 50,
-    shapeTypes: ["circle", "rectangle"] as (
-      | "circle"
-      | "rectangle"
-      | "triangle"
-    )[], // Add appropriate shape types
-    populationSize: 50, // Add appropriate population size
-  });
+  const [settings, setSettings] = useState<ArtSettings>(
+    getDefaultSettings("geometric")
+  );
   const [stats, setStats] = useState({
     generation: 0,
     fitness: 0,
-    shapes: 100,
+    shapes: settings.numShapes,
   });
 
   // Handle file upload
@@ -37,7 +35,7 @@ const GeneticArt: React.FC = () => {
     setOriginalImage(imageData);
     setGeneratedImage(null);
     setIsGenerating(false);
-    setStats({ generation: 0, fitness: 0, shapes: 100 });
+    setStats({ generation: 0, fitness: 0, shapes: settings.numShapes });
   };
 
   // Reset function
@@ -56,18 +54,9 @@ const GeneticArt: React.FC = () => {
     setIsGenerating(false);
     setGeneratedImage(null);
 
-    // Reset settings based on new style
-    const defaultSettings = {
-      numShapes: newStyle === "geometric" ? 500 : 1000, // Reset default shape count
-      mutationRate: 0.1,
-      minSize: 5,
-      maxSize: 50,
-      shapeTypes: ["circle", "rectangle"],
-      populationSize: 50,
-    };
-
-    setSettings(defaultSettings);
-    setStats({ generation: 0, fitness: 0, shapes: defaultSettings.numShapes });
+    const newSettings = getDefaultSettings(newStyle);
+    setSettings(newSettings);
+    setStats({ generation: 0, fitness: 0, shapes: newSettings.numShapes });
 
     if (originalImage) {
       const canvas = generator?.getCanvas();
@@ -78,11 +67,11 @@ const GeneticArt: React.FC = () => {
   };
 
   // Handle settings change
-  const handleSettingsChange = (newSettings: any) => {
+  const handleSettingsChange = (newSettings: ArtSettings) => {
     setSettings(newSettings);
+    setStats((prev) => ({ ...prev, shapes: newSettings.numShapes }));
     if (generator) {
       setIsGenerating(false);
-      // Wait for next frame to ensure generation has stopped
       requestAnimationFrame(() => {
         const canvas = generator.getCanvas();
         handleCanvasReady(canvas);
@@ -102,7 +91,6 @@ const GeneticArt: React.FC = () => {
       ctx.drawImage(img, 0, 0);
       const imageData = ctx.getImageData(0, 0, img.width, img.height);
 
-      // Create appropriate generator based on style
       const currentStyle = style || selectedStyle;
       let newGenerator;
 
@@ -114,9 +102,26 @@ const GeneticArt: React.FC = () => {
             settings
           );
           break;
+        case "mosaic":
+          newGenerator = new MosaicArtGenerator(canvas, imageData, settings);
+          break;
+        case "stained-glass":
+          if (settings.type === "stained-glass") {
+            newGenerator = new StainedGlassGenerator(
+              canvas,
+              imageData,
+              settings
+            );
+          }
+          break;
         case "geometric":
-        default:
-          newGenerator = new GeometricArtGenerator(canvas, imageData, settings);
+          if (settings.type === "geometric") {
+            newGenerator = new GeometricArtGenerator(
+              canvas,
+              imageData,
+              settings
+            );
+          }
           break;
       }
 

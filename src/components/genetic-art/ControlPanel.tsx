@@ -1,6 +1,7 @@
 // src/components/genetic-art/ControlPanel.tsx
 import React from "react";
 import { Play, Pause, RotateCcw } from "lucide-react";
+import { ArtSettings } from "../../types/settings";
 
 interface ControlPanelProps {
   selectedStyle: string;
@@ -8,13 +9,8 @@ interface ControlPanelProps {
   isGenerating: boolean;
   onGenerationToggle: (isGenerating: boolean) => void;
   hasImage: boolean;
-  settings: {
-    numShapes: number;
-    mutationRate: number;
-    minSize: number;
-    maxSize: number;
-  };
-  onSettingsChange: (settings: any) => void;
+  settings: ArtSettings;
+  onSettingsChange: (settings: ArtSettings) => void;
   onReset: () => void;
 }
 
@@ -41,6 +37,21 @@ const STYLES = [
   },
 ];
 
+const getShapeLimits = (style: string) => {
+  switch (style) {
+    case "stained-glass":
+      return { min: 50, max: 1000 };
+    case "geometric":
+      return { min: 50, max: 1000 };
+    case "mosaic":
+      return { min: 100, max: 2000 };
+    case "pointillism":
+      return { min: 1000, max: 10000 };
+    default:
+      return { min: 50, max: 1000 };
+  }
+};
+
 const ControlPanel: React.FC<ControlPanelProps> = ({
   selectedStyle,
   onStyleChange,
@@ -51,132 +62,100 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onSettingsChange,
   onReset,
 }) => {
+  const shapeLimits = getShapeLimits(selectedStyle);
+
+  const handleNumShapesChange = (value: number) => {
+    onSettingsChange({
+      ...settings,
+      numShapes: Math.min(Math.max(value, shapeLimits.min), shapeLimits.max),
+    });
+  };
+
   const renderStyleSettings = () => {
-    switch (selectedStyle) {
-      case "geometric":
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Number of Shapes: {settings.numShapes}
-              </label>
-              <input
-                type="range"
-                min="50"
-                max="1000"
-                value={settings.numShapes}
-                onChange={(e) =>
-                  onSettingsChange({
-                    ...settings,
-                    numShapes: parseInt(e.target.value),
-                  })
-                }
-                className="w-full"
-                disabled={isGenerating}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Shape Size Range: {settings.minSize} - {settings.maxSize}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="range"
-                  min="1"
-                  max="50"
-                  value={settings.minSize}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      minSize: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-full"
-                  disabled={isGenerating}
-                />
-                <input
-                  type="range"
-                  min="10"
-                  max="100"
-                  value={settings.maxSize}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      maxSize: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-full"
-                  disabled={isGenerating}
-                />
-              </div>
-            </div>
-          </div>
-        );
+    const shapeName =
+      selectedStyle === "stained-glass"
+        ? "Panels"
+        : selectedStyle === "mosaic"
+        ? "Tiles"
+        : selectedStyle === "pointillism"
+        ? "Dots"
+        : "Shapes";
 
-      case "pointillism":
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Number of Dots: {settings.numShapes}
-              </label>
-              <input
-                type="range"
-                min="1000"
-                max="10000"
-                value={settings.numShapes}
-                onChange={(e) =>
-                  onSettingsChange({
-                    ...settings,
-                    numShapes: parseInt(e.target.value),
-                  })
-                }
-                className="w-full"
-                disabled={isGenerating}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Dot Size Range: {settings.minSize} - {settings.maxSize}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={settings.minSize}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      minSize: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-full"
-                  disabled={isGenerating}
-                />
-                <input
-                  type="range"
-                  min="5"
-                  max="20"
-                  value={settings.maxSize}
-                  onChange={(e) =>
-                    onSettingsChange({
-                      ...settings,
-                      maxSize: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-full"
-                  disabled={isGenerating}
-                />
-              </div>
-            </div>
+    return (
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Number of {shapeName}: {settings.numShapes}
+          </label>
+          <input
+            type="range"
+            min={shapeLimits.min}
+            max={shapeLimits.max}
+            value={settings.numShapes}
+            onChange={(e) => handleNumShapesChange(parseInt(e.target.value))}
+            className="w-full"
+            disabled={isGenerating}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {shapeName} Size Range: {settings.minSize} - {settings.maxSize}
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="range"
+              min={1}
+              max={50}
+              value={settings.minSize}
+              onChange={(e) =>
+                onSettingsChange({
+                  ...settings,
+                  minSize: parseInt(e.target.value),
+                })
+              }
+              className="w-full"
+              disabled={isGenerating}
+            />
+            <input
+              type="range"
+              min={10}
+              max={100}
+              value={settings.maxSize}
+              onChange={(e) =>
+                onSettingsChange({
+                  ...settings,
+                  maxSize: parseInt(e.target.value),
+                })
+              }
+              className="w-full"
+              disabled={isGenerating}
+            />
           </div>
-        );
+        </div>
 
-      // Add other style settings as needed
-      default:
-        return null;
-    }
+        {settings.type === "stained-glass" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Border Width: {settings.borderWidth}px
+            </label>
+            <input
+              type="range"
+              min={1}
+              max={5}
+              value={settings.borderWidth}
+              onChange={(e) =>
+                onSettingsChange({
+                  ...settings,
+                  borderWidth: parseInt(e.target.value),
+                })
+              }
+              className="w-full"
+              disabled={isGenerating}
+            />
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -187,6 +166,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         <div className="space-y-2">
           {STYLES.map((style) => (
             <button
+              // src/components/genetic-art/ControlPanel.tsx (continued)
               key={style.id}
               className={`w-full p-3 text-left rounded-lg transition-colors ${
                 selectedStyle === style.id
@@ -256,7 +236,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
           {/* Reset button */}
           <button
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 ${
+              !hasImage || isGenerating ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             onClick={onReset}
             disabled={!hasImage || isGenerating}
           >
