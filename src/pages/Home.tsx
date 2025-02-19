@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Camera, GitBranch, Sparkles, Code, Brain, Brush } from "lucide-react";
+import {
+  Grid,
+  Wind,
+  Bug,
+  Camera,
+  GitBranch,
+  Sparkles,
+  Code,
+  Brain,
+  Brush,
+} from "lucide-react";
 
 const Home: React.FC = () => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -47,7 +57,7 @@ const Home: React.FC = () => {
 
                   <div className="space-y-4">
                     <div className="flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-blue-50">
-                      <Sparkles className="w-5 h-5 text-blue-500" />
+                      <Grid className="w-5 h-5 text-blue-500" />
                       <div>
                         <h3 className="font-semibold text-gray-800">
                           Game of Life Evolution
@@ -59,7 +69,7 @@ const Home: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-blue-50">
-                      <GitBranch className="w-5 h-5 text-blue-500" />
+                      <Wind className="w-5 h-5 text-blue-500" />
                       <div>
                         <h3 className="font-semibold text-gray-800">
                           Flocking Behavior
@@ -71,7 +81,7 @@ const Home: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-blue-50">
-                      <Code className="w-5 h-5 text-blue-500" />
+                      <Bug className="w-5 h-5 text-blue-500" />
                       <div>
                         <h3 className="font-semibold text-gray-800">
                           Ant Colony Optimization
