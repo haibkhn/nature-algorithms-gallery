@@ -1,4 +1,3 @@
-// src/components/simulations/ant-colony/components/Canvas.tsx
 import React, { useRef, useEffect } from "react";
 import { CanvasProps } from "../types";
 

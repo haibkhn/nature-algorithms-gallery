@@ -1,4 +1,3 @@
-// src/components/genetic-art/algorithms/stainedGlass.ts
 interface GlassPanel {
   points: { x: number; y: number }[];
   color: string;

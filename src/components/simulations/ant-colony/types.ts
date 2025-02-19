@@ -1,4 +1,3 @@
-// src/components/simulations/ant-colony/types.ts
 export interface Position {
   x: number;
   y: number;

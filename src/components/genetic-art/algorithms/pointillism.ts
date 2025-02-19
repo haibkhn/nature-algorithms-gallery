@@ -1,4 +1,3 @@
-// src/components/genetic-art/algorithms/pointillism.ts
 interface Dot {
   x: number;
   y: number;

@@ -1,4 +1,3 @@
-// src/components/simulations/boids/utils/FlockingRules.ts
 import { Boid, Vector, FlockingSettings } from "../types";
 
 // Calculate distance between two points

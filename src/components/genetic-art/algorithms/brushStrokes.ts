@@ -1,4 +1,3 @@
-// // src/components/genetic-art/algorithms/brushStrokes.ts
 // interface BrushStroke {
 //   startPoint: { x: number; y: number };
 //   controlPoints: { x: number; y: number }[];

@@ -1,4 +1,3 @@
-// src/pages/Simulations.tsx
 import React, { useState } from "react";
 import GameOfLife from "../components/simulations/game-of-life";
 import Boids from "../components/simulations/boids";

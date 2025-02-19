@@ -1,4 +1,3 @@
-// src/components/simulations/boids/components/Controls.tsx
 import React, { useState } from "react";
 import { Play, Pause, RefreshCw, Maximize2 } from "lucide-react";
 import { ControlsProps, FlockingSettings } from "../types";

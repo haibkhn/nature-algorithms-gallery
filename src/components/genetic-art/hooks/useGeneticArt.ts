@@ -1,4 +1,3 @@
-// src/components/genetic-art/hooks/useGeneticArt.ts
 import { useEffect, useRef, useState } from "react";
 import GeometricArtGenerator from "../algorithms/geometric";
 

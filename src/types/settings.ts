@@ -1,4 +1,3 @@
-// src/types/settings.ts
 export type ShapeType = "circle" | "rectangle" | "triangle";
 
 export interface BaseSettings {

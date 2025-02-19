@@ -1,4 +1,3 @@
-// src/components/simulations/game-of-life/index.tsx
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import Grid, { GridHandle } from "./components/Grid";
 import Controls from "./components/Controls";

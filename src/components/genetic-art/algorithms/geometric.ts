@@ -1,4 +1,3 @@
-// src/components/genetic-art/algorithms/geometric.ts
 interface Shape {
   type: "circle" | "triangle" | "rectangle";
   x: number;

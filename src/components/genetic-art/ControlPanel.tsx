@@ -1,4 +1,3 @@
-// src/components/genetic-art/ControlPanel.tsx
 import React from "react";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import { ArtSettings } from "../../types/settings";
@@ -166,7 +165,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         <div className="space-y-2">
           {STYLES.map((style) => (
             <button
-              // src/components/genetic-art/ControlPanel.tsx (continued)
               key={style.id}
               className={`w-full p-3 text-left rounded-lg transition-colors ${
                 selectedStyle === style.id

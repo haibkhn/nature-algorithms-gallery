@@ -1,4 +1,3 @@
-// src/components/simulations/boids/constants/presets.ts
 export const PRESETS = {
   default: {
     name: "Default Flock",

@@ -1,4 +1,3 @@
-// src/components/simulations/ant-colony/utils/antLogic.ts
 import { Ant, Grid, Position, AntColonySettings, Food } from "../types";
 
 // Update an individual ant

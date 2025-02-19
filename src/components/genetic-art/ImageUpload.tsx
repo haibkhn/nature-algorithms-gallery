@@ -1,8 +1,7 @@
-// src/components/genetic-art/ImageUpload.tsx
 import React, { useCallback } from "react";
 import { Upload, Image as ImageIcon } from "lucide-react";
 
-// Sample images array - replace these with your actual image paths
+// Sample images array
 const SAMPLE_IMAGES = [
   "/samples/sample1.jpg",
   "/samples/sample2.jpg",

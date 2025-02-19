@@ -1,4 +1,3 @@
-// src/components/simulations/game-of-life/components/Controls.tsx
 import React from "react";
 import { Info } from "lucide-react";
 import { ControlsProps } from "../types";

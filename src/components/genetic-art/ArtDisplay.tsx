@@ -1,4 +1,3 @@
-// src/components/genetic-art/ArtDisplay.tsx
 import React, { useRef, useState, useEffect } from "react";
 import { MoveHorizontal, ZoomIn, ZoomOut } from "lucide-react";
 

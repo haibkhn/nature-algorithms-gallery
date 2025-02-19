@@ -1,4 +1,3 @@
-// src/components/simulations/ant-colony/components/Controls.tsx
 import React, { useState } from "react";
 import { Play, Pause, RefreshCw, Eraser } from "lucide-react";
 import { ControlsProps, AntColonySettings } from "../types";

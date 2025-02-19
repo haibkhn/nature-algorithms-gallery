@@ -1,4 +1,3 @@
-// src/components/genetic-art/algorithms/mosaic.ts
 interface Tile {
   x: number;
   y: number;

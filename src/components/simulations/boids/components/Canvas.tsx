@@ -1,4 +1,3 @@
-// src/components/simulations/boids/components/Canvas.tsx
 import React, { useRef, useEffect, useState } from "react";
 import { CanvasProps, Vector } from "../types";
 

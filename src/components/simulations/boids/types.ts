@@ -1,4 +1,3 @@
-// src/components/simulations/boids/types.ts
 export interface Vector {
   x: number;
   y: number;

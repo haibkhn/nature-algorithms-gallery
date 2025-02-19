@@ -1,4 +1,3 @@
-// src/components/simulations/ant-colony/components/Tutorial.tsx
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import { TutorialProps } from "../types";

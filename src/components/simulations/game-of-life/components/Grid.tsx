@@ -1,4 +1,3 @@
-// src/components/simulations/game-of-life/components/Grid.tsx
 import React, {
   useRef,
   useState,

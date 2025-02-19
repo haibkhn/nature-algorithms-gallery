@@ -1,4 +1,3 @@
-// src/pages/GeneticArt.tsx
 import React, { useState, useEffect } from "react";
 import ImageUpload from "../components/genetic-art/ImageUpload";
 import ArtDisplay from "../components/genetic-art/ArtDisplay";

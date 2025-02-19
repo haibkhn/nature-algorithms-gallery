@@ -1,4 +1,3 @@
-// src/components/simulations/ant-colony/index.tsx
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import Canvas from "./components/Canvas";
 import Controls from "./components/Controls";

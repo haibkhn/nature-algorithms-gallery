@@ -1,4 +1,3 @@
-// src/components/simulations/boids/components/StatsPanel.tsx
 import React from "react";
 import {
   LineChart,

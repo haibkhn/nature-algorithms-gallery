@@ -1,4 +1,3 @@
-// src/components/simulations/ant-colony/components/StatsPanel.tsx
 import React from "react";
 import {
   LineChart,

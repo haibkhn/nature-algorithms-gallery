@@ -1,4 +1,3 @@
-// src/components/simulations/ant-colony/utils/statsHelper.ts
 import { Ant, Grid, Stats } from "../types";
 
 export function calculateStats(ants: Ant[], grid: Grid): Stats {

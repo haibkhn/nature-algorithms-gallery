@@ -1,4 +1,3 @@
-// src/components/simulations/boids/components/Tutorial.tsx
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
