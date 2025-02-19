@@ -68,7 +68,6 @@ export function useGeneticArt({
 
     const evolve = () => {
       const result = generatorRef.current!.evolve();
-      console.log("Evolution result:", result);
       setFitness(result.fitness);
       setGeneration((g) => g + 1);
 

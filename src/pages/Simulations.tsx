@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import GameOfLife from "../components/simulations/game-of-life";
 import Boids from "../components/simulations/boids";
+import { SimulationMap } from "@/types/simulation";
 
 interface Simulation {
   title: string;
@@ -10,7 +11,7 @@ interface Simulation {
   tags: string[];
 }
 
-const SIMULATIONS: Record<string, Simulation> = {
+const SIMULATIONS: SimulationMap = {
   gameOfLife: {
     title: "Conway's Game of Life",
     description:
@@ -18,11 +19,12 @@ const SIMULATIONS: Record<string, Simulation> = {
     component: GameOfLife,
     tags: ["Cellular Automata", "Evolution"],
   },
-  flocking: {
-    title: "Flocking Simulation",
-    description: "Birds flocking behavior based on simple rules",
+  boids: {
+    title: "Boids Flocking",
+    description:
+      "Simulation of flocking behavior using Craig Reynolds' Boids algorithm",
     component: Boids,
-    tags: ["Swarm", "Movement", "Emergence"],
+    tags: ["Swarm Intelligence", "Movement"],
   },
   antColony: {
     title: "Ant Colony",

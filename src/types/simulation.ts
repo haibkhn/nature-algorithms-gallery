@@ -6,7 +6,12 @@ export interface Pattern {
 }
 
 export interface SimulationMap {
-  [key: string]: Pattern;
+  [key: string]: {
+    title: string;
+    description: string;
+    component: React.FC;
+    tags: string[];
+  };
 }
 
 export interface GridSize {

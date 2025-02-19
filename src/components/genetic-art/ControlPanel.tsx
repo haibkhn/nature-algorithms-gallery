@@ -40,9 +40,9 @@ const STYLES = [
 const getShapeLimits = (style: string) => {
   switch (style) {
     case "stained-glass":
-      return { min: 50, max: 1000 };
+      return { min: 50, max: 5000 };
     case "geometric":
-      return { min: 50, max: 1000 };
+      return { min: 50, max: 5000 };
     case "mosaic":
       return { min: 100, max: 2000 };
     case "pointillism":

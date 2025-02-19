@@ -1,18 +1,26 @@
 // src/components/simulations/boids/components/Canvas.tsx
-import React, { useRef, useEffect } from "react";
-import { CanvasProps, Boid } from "../types";
+import React, { useRef, useEffect, useState } from "react";
+import { CanvasProps, Vector } from "../types";
 
-const Canvas: React.FC<CanvasProps> = ({ boids, settings, width, height }) => {
+const Canvas: React.FC<CanvasProps> = ({
+  boids,
+  settings,
+  width,
+  height,
+  onMousePositionUpdate,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [mousePos, setMousePos] = useState<Vector | null>(null);
 
   // Draw a single boid
   const drawBoid = (
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
-    angle: number
+    angle: number,
+    isPredator: boolean = false
   ) => {
-    const size = 10;
+    const size = isPredator ? 15 : 10;
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
@@ -24,14 +32,34 @@ const Canvas: React.FC<CanvasProps> = ({ boids, settings, width, height }) => {
     ctx.lineTo(-size, -size / 2);
     ctx.closePath();
 
-    // Fill and stroke
-    ctx.fillStyle = "rgba(59, 130, 246, 0.8)";
-    ctx.strokeStyle = "rgb(29, 78, 216)";
+    // Fill and stroke - red for predators, blue for regular boids
+    ctx.fillStyle = isPredator
+      ? "rgba(239, 68, 68, 0.8)"
+      : "rgba(59, 130, 246, 0.8)";
+    ctx.strokeStyle = isPredator ? "rgb(185, 28, 28)" : "rgb(29, 78, 216)";
     ctx.lineWidth = 1;
     ctx.fill();
     ctx.stroke();
 
     ctx.restore();
+  };
+
+  // Handle mouse movement
+  const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+    const newPos = { x, y };
+    setMousePos(newPos);
+    onMousePositionUpdate(newPos);
+  };
+
+  const handleMouseLeave = () => {
+    setMousePos(null);
+    onMousePositionUpdate(null);
   };
 
   // Main render function
@@ -62,72 +90,30 @@ const Canvas: React.FC<CanvasProps> = ({ boids, settings, width, height }) => {
       ctx.stroke();
     }
 
+    // Draw mouse influence area if mouse is over canvas
+    if (mousePos && settings.mouseInteraction !== "none") {
+      ctx.beginPath();
+      ctx.arc(mousePos.x, mousePos.y, settings.mouseRadius, 0, Math.PI * 2);
+      ctx.strokeStyle =
+        settings.mouseInteraction === "attract"
+          ? "rgba(59, 130, 246, 0.3)"
+          : "rgba(239, 68, 68, 0.3)";
+      ctx.stroke();
+      ctx.fillStyle =
+        settings.mouseInteraction === "attract"
+          ? "rgba(59, 130, 246, 0.1)"
+          : "rgba(239, 68, 68, 0.1)";
+      ctx.fill();
+    }
+
     // Draw all boids
     boids.forEach((boid) => {
       const angle = Math.atan2(boid.velocity.y, boid.velocity.x);
-      drawBoid(ctx, boid.position.x, boid.position.y, angle);
+      drawBoid(ctx, boid.position.x, boid.position.y, angle, boid.isPredator);
     });
-
-    // Draw debug info
-    ctx.fillStyle = "black";
-    ctx.font = "12px monospace";
-    ctx.fillText(`Boids: ${boids.length}`, 10, 20);
   };
 
-  // Draw background grid
-  const drawBackground = (
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number
-  ) => {
-    ctx.save();
-    ctx.strokeStyle = "rgba(229, 231, 235, 0.5)";
-    ctx.lineWidth = 0.5;
-
-    // Draw vertical lines
-    for (let x = 0; x <= width; x += 50) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
-
-    // Draw horizontal lines
-    for (let y = 0; y <= height; y += 50) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  };
-
-  // Draw debug information
-  const drawDebugInfo = (
-    ctx: CanvasRenderingContext2D,
-    boids: Boid[],
-    settings: CanvasProps["settings"]
-  ) => {
-    ctx.save();
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.font = "12px monospace";
-
-    const info = [
-      `Boids: ${boids.length}`,
-      `Alignment: ${settings.alignmentForce}`,
-      `Cohesion: ${settings.cohesionForce}`,
-      `Separation: ${settings.separationForce}`,
-    ];
-
-    info.forEach((text, i) => {
-      ctx.fillText(text, 10, 20 + i * 15);
-    });
-
-    ctx.restore();
-  };
-
-  // Set up canvas and start animation
+  // Set up canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -155,12 +141,14 @@ const Canvas: React.FC<CanvasProps> = ({ boids, settings, width, height }) => {
   // Render when boids update
   useEffect(() => {
     render();
-  }, [boids]);
+  }, [boids, mousePos, settings.mouseInteraction, settings.mouseRadius]);
 
   return (
     <div className="w-full h-full flex items-center justify-center bg-gray-50">
       <canvas
         ref={canvasRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         style={{
           width: `${width}px`,
           height: `${height}px`,

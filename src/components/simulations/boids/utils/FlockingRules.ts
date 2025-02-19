@@ -31,6 +31,150 @@ export function limit(vector: Vector, max: number): Vector {
   return vector;
 }
 
+// Calculate force from mouse position
+export function calculateMouseForce(
+  boid: Boid,
+  mousePos: Vector | null,
+  settings: FlockingSettings
+): Vector {
+  if (!mousePos || settings.mouseInteraction === "none") {
+    return { x: 0, y: 0 };
+  }
+
+  const d = distance(boid.position, mousePos);
+  if (d > settings.mouseRadius) {
+    return { x: 0, y: 0 };
+  }
+
+  // Calculate direction from boid to mouse
+  const direction = {
+    x: mousePos.x - boid.position.x,
+    y: mousePos.y - boid.position.y,
+  };
+
+  // Normalize and scale by force
+  const force = settings.mouseForce * (1 - d / settings.mouseRadius);
+  const normalized = normalize(direction, force);
+
+  // Invert force if repelling
+  return settings.mouseInteraction === "attract"
+    ? normalized
+    : { x: -normalized.x, y: -normalized.y };
+}
+
+// Calculate force from nearby predators
+export function calculatePredatorAvoidance(
+  boid: Boid,
+  boids: Boid[],
+  settings: FlockingSettings
+): Vector {
+  if (boid.isPredator) return { x: 0, y: 0 };
+
+  let avoidance = { x: 0, y: 0 };
+  let count = 0;
+
+  boids.forEach((other) => {
+    if (!other.isPredator) return;
+
+    const d = distance(boid.position, other.position);
+    if (d < settings.visualRange * 1.5) {
+      // Larger range for predator detection
+      // Vector pointing away from predator
+      const diff = {
+        x: boid.position.x - other.position.x,
+        y: boid.position.y - other.position.y,
+      };
+
+      // Weighted by distance (closer predators cause stronger avoidance)
+      const weight =
+        (settings.visualRange * 1.5 - d) / (settings.visualRange * 1.5);
+      avoidance.x += diff.x * weight;
+      avoidance.y += diff.y * weight;
+      count++;
+    }
+  });
+
+  if (count > 0) {
+    avoidance.x /= count;
+    avoidance.y /= count;
+    avoidance = normalize(avoidance, settings.maxSpeed * 2); // Stronger than normal forces
+    avoidance = limit(avoidance, settings.maxForce * 2);
+  }
+
+  return {
+    x: avoidance.x * settings.predatorForce,
+    y: avoidance.y * settings.predatorForce,
+  };
+}
+
+// Predator chase behavior
+export function calculatePredatorChase(
+  predator: Boid,
+  boids: Boid[],
+  settings: FlockingSettings
+): Vector {
+  if (!predator.isPredator) return { x: 0, y: 0 };
+
+  let chase = { x: 0, y: 0 };
+  let closestDist = Infinity;
+  let hasTarget = false;
+
+  boids.forEach((other) => {
+    if (other.isPredator) return;
+
+    const d = distance(predator.position, other.position);
+    if (d < settings.visualRange * 1.5 && d < closestDist) {
+      closestDist = d;
+      chase = {
+        x: other.position.x - predator.position.x,
+        y: other.position.y - predator.position.y,
+      };
+      hasTarget = true;
+    }
+  });
+
+  if (hasTarget) {
+    chase = normalize(chase, settings.maxSpeed * 1.2); // Predators are slightly faster
+    chase = limit(chase, settings.maxForce * 1.2);
+  }
+
+  return chase;
+}
+
+// Main flocking forces
+export function calculateFlockingForces(
+  boid: Boid,
+  boids: Boid[],
+  mousePos: Vector | null,
+  settings: FlockingSettings
+): Vector {
+  if (boid.isPredator) {
+    const chase = calculatePredatorChase(boid, boids, settings);
+    return chase;
+  }
+
+  const alignment = calculateAlignment(boid, boids, settings);
+  const cohesion = calculateCohesion(boid, boids, settings);
+  const separation = calculateSeparation(boid, boids, settings);
+  const mouseForce = calculateMouseForce(boid, mousePos, settings);
+  const predatorAvoidance = calculatePredatorAvoidance(boid, boids, settings);
+
+  return {
+    x:
+      alignment.x +
+      cohesion.x +
+      separation.x +
+      mouseForce.x +
+      predatorAvoidance.x,
+    y:
+      alignment.y +
+      cohesion.y +
+      separation.y +
+      mouseForce.y +
+      predatorAvoidance.y,
+  };
+}
+
 // Rule 1: Alignment
 // Steer towards the average heading of local flockmates
 export function calculateAlignment(

@@ -8,18 +8,26 @@ import {
   calculateAlignment,
   calculateCohesion,
   calculateSeparation,
+  calculateFlockingForces,
 } from "./utils/FlockingRules";
+import Tutorial from "./components/Tutorial";
 
 const DEFAULT_SETTINGS: FlockingSettings = {
+  type: "boids",
   alignmentForce: 1.0,
   cohesionForce: 1.0,
   separationForce: 1.2,
   visualRange: 50,
   separationRange: 25,
-  numberOfBoids: 50, // Reduced for initial testing
+  numberOfBoids: 50,
   maxSpeed: 4,
   maxForce: 0.2,
-  type: "boids",
+  // New settings with default values
+  mouseForce: 1.0,
+  mouseRadius: 100,
+  predatorForce: 1.0,
+  numberOfPredators: 0,
+  mouseInteraction: "none" as const,
 };
 
 const Boids: React.FC = () => {
@@ -34,6 +42,8 @@ const Boids: React.FC = () => {
   const [historyData, setHistoryData] = useState<
     { timestamp: number; alignment: number; groupCount: number }[]
   >([]);
+  const [mousePosition, setMousePosition] = useState<Vector | null>(null);
+  const [showTutorial, setShowTutorial] = useState(true);
 
   const canvasWidth = 800;
   const canvasHeight = 600;
@@ -41,8 +51,10 @@ const Boids: React.FC = () => {
 
   // Initialize boids
   const initializeBoids = useCallback(() => {
-    console.log("Initializing boids..."); // Debug log
+    console.log("Initializing boids...");
     const newBoids: Boid[] = [];
+
+    // Regular boids
     for (let i = 0; i < settings.numberOfBoids; i++) {
       newBoids.push({
         position: {
@@ -56,11 +68,36 @@ const Boids: React.FC = () => {
         acceleration: { x: 0, y: 0 },
         maxSpeed: settings.maxSpeed,
         maxForce: settings.maxForce,
+        isPredator: false,
       });
     }
-    console.log("Created boids:", newBoids.length); // Debug log
+
+    // Add predators
+    for (let i = 0; i < settings.numberOfPredators; i++) {
+      newBoids.push({
+        position: {
+          x: Math.random() * canvasWidth,
+          y: Math.random() * canvasHeight,
+        },
+        velocity: {
+          x: (Math.random() * 2 - 1) * settings.maxSpeed * 1.2,
+          y: (Math.random() * 2 - 1) * settings.maxSpeed * 1.2,
+        },
+        acceleration: { x: 0, y: 0 },
+        maxSpeed: settings.maxSpeed * 1.2,
+        maxForce: settings.maxForce * 1.2,
+        isPredator: true,
+      });
+    }
+
+    console.log("Created boids:", newBoids.length);
     setBoids(newBoids);
-  }, [settings.numberOfBoids, settings.maxSpeed, settings.maxForce]);
+  }, [
+    settings.numberOfBoids,
+    settings.numberOfPredators,
+    settings.maxSpeed,
+    settings.maxForce,
+  ]);
 
   // Update simulation
   const updateSimulation = useCallback(() => {
@@ -68,15 +105,18 @@ const Boids: React.FC = () => {
 
     setBoids((currentBoids) => {
       return currentBoids.map((boid) => {
-        // Calculate forces
-        const alignment = calculateAlignment(boid, currentBoids, settings);
-        const cohesion = calculateCohesion(boid, currentBoids, settings);
-        const separation = calculateSeparation(boid, currentBoids, settings);
+        // Calculate forces using combined flocking rules
+        const forces = calculateFlockingForces(
+          boid,
+          currentBoids,
+          mousePosition,
+          settings
+        );
 
-        // Update acceleration
+        // Apply forces to create new acceleration
         const acceleration = {
-          x: alignment.x + cohesion.x + separation.x,
-          y: alignment.y + cohesion.y + separation.y,
+          x: forces.x,
+          y: forces.y,
         };
 
         // Update velocity
@@ -85,16 +125,19 @@ const Boids: React.FC = () => {
           y: boid.velocity.y + acceleration.y,
         };
 
-        // Limit speed
+        // Apply speed limit based on boid type
+        const maxSpeed = boid.isPredator
+          ? settings.maxSpeed * 1.2
+          : settings.maxSpeed;
         const speed = Math.sqrt(
           velocity.x * velocity.x + velocity.y * velocity.y
         );
-        if (speed > settings.maxSpeed) {
-          velocity.x = (velocity.x / speed) * settings.maxSpeed;
-          velocity.y = (velocity.y / speed) * settings.maxSpeed;
+        if (speed > maxSpeed) {
+          velocity.x = (velocity.x / speed) * maxSpeed;
+          velocity.y = (velocity.y / speed) * maxSpeed;
         }
 
-        // Update position
+        // Update position with wrapping
         const position = {
           x: (boid.position.x + velocity.x + canvasWidth) % canvasWidth,
           y: (boid.position.y + velocity.y + canvasHeight) % canvasHeight,
@@ -109,8 +152,117 @@ const Boids: React.FC = () => {
       });
     });
 
+    // Calculate and update stats
+    const stats = calculateStats(boids);
+    setStats(stats);
+    updateHistoryData(stats);
+
     animationFrameRef.current = requestAnimationFrame(updateSimulation);
-  }, [isRunning, settings]);
+  }, [isRunning, settings, mousePosition, canvasWidth, canvasHeight]);
+
+  // Calculate statistics for the flock
+  const calculateStats = (boids: Boid[]) => {
+    const regularBoids = boids.filter((b) => !b.isPredator);
+
+    // Calculate average speed
+    const avgSpeed =
+      regularBoids.reduce((sum, boid) => {
+        const speed = Math.sqrt(
+          boid.velocity.x * boid.velocity.x + boid.velocity.y * boid.velocity.y
+        );
+        return sum + speed;
+      }, 0) / regularBoids.length;
+
+    // Calculate alignment (how aligned the boids are in direction)
+    const avgDirection = regularBoids.reduce(
+      (sum, boid) => {
+        const mag = Math.sqrt(
+          boid.velocity.x * boid.velocity.x + boid.velocity.y * boid.velocity.y
+        );
+        return {
+          x: sum.x + boid.velocity.x / mag,
+          y: sum.y + boid.velocity.y / mag,
+        };
+      },
+      { x: 0, y: 0 }
+    );
+
+    const alignmentValue =
+      Math.sqrt(
+        avgDirection.x * avgDirection.x + avgDirection.y * avgDirection.y
+      ) / regularBoids.length;
+
+    // Count distinct groups
+    const groups = countGroups(regularBoids);
+
+    return {
+      averageSpeed: avgSpeed,
+      averageAlignment: alignmentValue,
+      groupCount: groups,
+    };
+  };
+
+  // Helper function to count distinct groups
+  const countGroups = (boids: Boid[], groupRadius: number = 50): number => {
+    const visited = new Set<Boid>();
+    let groupCount = 0;
+
+    const findGroup = (boid: Boid) => {
+      if (visited.has(boid)) return;
+      visited.add(boid);
+
+      boids.forEach((other) => {
+        if (!visited.has(other)) {
+          const dx = boid.position.x - other.position.x;
+          const dy = boid.position.y - other.position.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < groupRadius) {
+            findGroup(other);
+          }
+        }
+      });
+    };
+
+    boids.forEach((boid) => {
+      if (!visited.has(boid)) {
+        groupCount++;
+        findGroup(boid);
+      }
+    });
+
+    return groupCount;
+  };
+
+  // Update history data for graphs
+  const updateHistoryData = (currentStats: FlockStats) => {
+    setHistoryData((prev) => {
+      const newData = [
+        ...prev,
+        {
+          timestamp: Date.now(),
+          alignment: currentStats.averageAlignment * 100,
+          groupCount: currentStats.groupCount,
+        },
+      ];
+
+      // Keep only last 50 data points
+      if (newData.length > 50) {
+        newData.shift();
+      }
+
+      return newData;
+    });
+  };
+
+  // Handle mouse position updates from Canvas
+  const handleMousePositionUpdate = (position: Vector | null) => {
+    setMousePosition(position);
+    // Update boid behavior based on mouse position
+    if (position) {
+      // Update boid behaviors with mouse position
+      // This will be used for attraction/repulsion based on settings.mouseInteraction
+    }
+  };
 
   // Handle controls
   const handleToggleRun = () => {
@@ -163,6 +315,8 @@ const Boids: React.FC = () => {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full">
+      {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
+
       <div className="flex-1 min-w-0 flex flex-col">
         <div className="flex-1 min-h-[600px] bg-white rounded-lg overflow-hidden">
           <Canvas
@@ -170,6 +324,7 @@ const Boids: React.FC = () => {
             settings={settings}
             width={canvasWidth}
             height={canvasHeight}
+            onMousePositionUpdate={handleMousePositionUpdate}
           />
         </div>
         <div className="mt-4">
@@ -185,6 +340,7 @@ const Boids: React.FC = () => {
           onSettingsChange={setSettings}
           onReset={handleReset}
           onScatter={handleScatter}
+          onShowTutorial={() => setShowTutorial(true)}
         />
       </div>
     </div>
