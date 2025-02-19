@@ -104,7 +104,7 @@ const Boids: React.FC = () => {
     if (!isRunning) return;
 
     setBoids((currentBoids) => {
-      return currentBoids.map((boid) => {
+      const updatedBoids = currentBoids.map((boid) => {
         // Calculate forces using combined flocking rules
         const forces = calculateFlockingForces(
           boid,
@@ -150,12 +150,14 @@ const Boids: React.FC = () => {
           acceleration,
         };
       });
-    });
 
-    // Calculate and update stats
-    const stats = calculateStats(boids);
-    setStats(stats);
-    updateHistoryData(stats);
+      // Calculate stats with the updated boids
+      const stats = calculateStats(updatedBoids);
+      setStats(stats);
+      updateHistoryData(stats);
+
+      return updatedBoids;
+    });
 
     animationFrameRef.current = requestAnimationFrame(updateSimulation);
   }, [isRunning, settings, mousePosition, canvasWidth, canvasHeight]);
