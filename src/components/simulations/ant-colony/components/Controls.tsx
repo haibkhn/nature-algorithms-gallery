@@ -112,7 +112,7 @@ const Controls: React.FC<ControlsProps> = ({
 
           {/* Current value on the right */}
           <span className="text-sm font-mono text-gray-500 min-w-[40px] text-right">
-            {(typeof value === "number" ? value : 0).toFixed(1)}
+            {(typeof value === "number" ? value : 0).toFixed(2)}
           </span>
 
           {/* Tooltip should only appear when hovered */}

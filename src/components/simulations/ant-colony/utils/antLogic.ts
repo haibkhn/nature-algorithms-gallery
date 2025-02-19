@@ -12,7 +12,12 @@ export function updateAnt(
   const sensorReadings = sense(ant, grid, settings);
 
   // Update direction based on pheromone trails and obstacles
-  const newDirection = calculateNewDirection(ant, sensorReadings, settings);
+  const newDirection = calculateNewDirection(
+    ant,
+    sensorReadings,
+    settings,
+    grid
+  );
 
   // Calculate new position
   const newPosition = moveAnt(ant, newDirection, grid, settings);
@@ -20,12 +25,13 @@ export function updateAnt(
   // Check for food or nest
   const hasReachedTarget = checkTarget(ant, newPosition, grid);
 
-  // Update path
+  // Update path more efficiently
   const newPath = [...ant.path];
-  if (distance(newPosition, ant.position) > 0.1) {
+  if (distance(newPosition, ant.position) > 1.0) {
+    // Increased threshold
     newPath.push(newPosition);
-    // Keep only recent path
-    if (newPath.length > 50) newPath.shift();
+    // Keep shorter path history
+    if (newPath.length > 20) newPath.shift(); // Reduced from 50
   }
 
   return {
@@ -59,9 +65,35 @@ function sense(ant: Ant, grid: Grid, settings: AntColonySettings) {
       gridY < grid.length
     ) {
       const cell = grid[gridY][gridX];
+
+      // Ignore home pheromones when too close to nest
+      const distanceToNest = distance(ant.position, {
+        x: grid[0].length / 2,
+        y: grid.length / 2,
+      });
+      const nearNest = distanceToNest < settings.sensorDistance * 0.5;
+
+      // Calculate pheromone value based on ant state
+      let pheromoneValue = 0;
+      if (ant.hasFood) {
+        pheromoneValue = nearNest ? 0 : cell.homePheromone;
+      } else {
+        pheromoneValue = cell.foodPheromone;
+      }
+
+      // Scale by distance
+      const distanceToSensor = distance(ant.position, {
+        x: sensorX,
+        y: sensorY,
+      });
+      const intensityScale = Math.pow(
+        1 - distanceToSensor / settings.sensorDistance,
+        2
+      );
+
       sensors.push({
         angle,
-        pheromone: ant.hasFood ? cell.homePheromone : cell.foodPheromone,
+        pheromone: pheromoneValue * intensityScale,
         isObstacle: cell.isObstacle,
       });
     } else {
@@ -76,28 +108,64 @@ function sense(ant: Ant, grid: Grid, settings: AntColonySettings) {
 function calculateNewDirection(
   ant: Ant,
   sensors: { angle: number; pheromone: number; isObstacle: boolean }[],
-  settings: AntColonySettings
+  settings: AntColonySettings,
+  grid: Grid
 ): number {
   // Avoid obstacles
   const obstacleAvoidance = sensors.some((s) => s.isObstacle) ? Math.PI : 0;
 
-  // Follow pheromone trail
+  // Find the strongest pheromone reading
+  const maxPheromone = Math.max(...sensors.map((s) => s.pheromone));
+
+  // Follow pheromone trail with weighted steering
   const weightedDirection = sensors.reduce((sum, sensor) => {
-    return sum + sensor.angle * sensor.pheromone;
+    // Stronger influence from higher pheromone concentrations
+    const weight = sensor.pheromone / (maxPheromone || 1);
+    return sum + sensor.angle * weight * settings.pheromoneStrength;
   }, 0);
 
-  // Random movement component
-  const randomness = (Math.random() - 0.5) * Math.PI * 0.5;
+  // When ant has food, bias movement towards nest
+  let homewardBias = 0;
+  if (ant.hasFood) {
+    const nestDirection = Math.atan2(
+      grid.length / 2 - ant.position.y,
+      grid[0].length / 2 - ant.position.x
+    );
+    const directionDiff = normalizeAngle(nestDirection - ant.direction);
+    homewardBias = directionDiff * 0.5; // Bias towards nest
+  }
 
-  // Combine all components
-  let newDirection =
-    ant.direction + weightedDirection + randomness + obstacleAvoidance;
+  // Reduce random movement when following strong trails or carrying food
+  const randomScale = maxPheromone > 0.5 || ant.hasFood ? 0.1 : 1;
+  const randomness = (Math.random() - 0.5) * Math.PI * 0.5 * randomScale;
+
+  // Combine all components with adjusted weights
+  let newDirection = ant.direction;
+
+  if (ant.hasFood) {
+    // Prioritize going home when has food
+    newDirection +=
+      homewardBias * 0.5 + weightedDirection * 0.3 + randomness * 0.2;
+  } else if (maxPheromone > 0.2) {
+    // Follow strong pheromone trails
+    newDirection += weightedDirection * 0.6 + randomness * 0.4;
+  } else {
+    // Explore when no strong trails
+    newDirection += weightedDirection * 0.3 + randomness * 0.7;
+  }
+
+  // Add obstacle avoidance
+  newDirection += obstacleAvoidance;
 
   // Normalize direction
-  while (newDirection > Math.PI * 2) newDirection -= Math.PI * 2;
-  while (newDirection < 0) newDirection += Math.PI * 2;
+  return normalizeAngle(newDirection);
+}
 
-  return newDirection;
+// Helper function to normalize angle
+function normalizeAngle(angle: number): number {
+  while (angle > Math.PI * 2) angle -= Math.PI * 2;
+  while (angle < 0) angle += Math.PI * 2;
+  return angle;
 }
 
 // Move ant based on direction
@@ -148,8 +216,14 @@ export function updatePheromones(
   return grid.map((row) =>
     row.map((cell) => ({
       ...cell,
-      homePheromone: cell.homePheromone * (1 - settings.pheromoneEvaporation),
-      foodPheromone: cell.foodPheromone * (1 - settings.pheromoneEvaporation),
+      homePheromone: Math.max(
+        0,
+        cell.homePheromone * (1 - settings.pheromoneEvaporation)
+      ),
+      foodPheromone: Math.max(
+        0,
+        cell.foodPheromone * (1 - settings.pheromoneEvaporation)
+      ),
     }))
   );
 }
@@ -166,10 +240,21 @@ export function addPheromone(
 
   if (x >= 0 && x < grid[0].length && y >= 0 && y < grid.length) {
     const newGrid = [...grid];
+    const cell = newGrid[y][x];
+
+    // Increase pheromone amount based on distance from nest
+    const distanceFromNest = distance(position, {
+      x: grid[0].length / 2,
+      y: grid.length / 2,
+    });
+    const distanceScale = Math.min(1, distanceFromNest / 20); // Scale up with distance
+    const pheromoneAmount =
+      type === "food" ? amount * distanceScale : amount * 1.5 * distanceScale;
+
     if (type === "home") {
-      newGrid[y][x].homePheromone += amount;
+      cell.homePheromone = Math.min(2, cell.homePheromone + pheromoneAmount);
     } else {
-      newGrid[y][x].foodPheromone += amount;
+      cell.foodPheromone = Math.min(2, cell.foodPheromone + pheromoneAmount);
     }
     return newGrid;
   }
