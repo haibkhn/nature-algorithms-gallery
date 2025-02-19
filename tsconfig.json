@@ -28,6 +28,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "*.config.js", "*.config.ts", "eslint.config.js"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

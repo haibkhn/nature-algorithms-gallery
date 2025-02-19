@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@react-spring/web": "^9.7.5",
