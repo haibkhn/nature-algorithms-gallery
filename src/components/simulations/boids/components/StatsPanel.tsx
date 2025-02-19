@@ -7,6 +7,7 @@ import {
   YAxis,
   ResponsiveContainer,
   Tooltip,
+  Legend,
 } from "recharts";
 import { StatsPanelProps } from "../types";
 
@@ -33,6 +34,18 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats, historyData }) => {
         </div>
       </div>
 
+      {/* Legend */}
+      <div className="flex gap-4 mb-4 justify-center text-sm">
+        <div className="flex items-center">
+          <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+          <span>Alignment (% of boids moving together)</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+          <span>Number of distinct flocks</span>
+        </div>
+      </div>
+
       {/* History Graph */}
       <div className="bg-white p-4 rounded-lg shadow-sm">
         <h3 className="text-sm font-medium text-gray-700 mb-4">
@@ -46,7 +59,8 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats, historyData }) => {
                 domain={["auto", "auto"]}
                 tick={false}
               />
-              <YAxis domain={[0, 100]} />
+              <YAxis yAxisId="left" domain={[0, 100]} />
+              <YAxis yAxisId="right" orientation="right" domain={[0, 10]} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "rgba(255, 255, 255, 0.9)",
@@ -54,19 +68,24 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats, historyData }) => {
                   borderRadius: "4px",
                   boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                 }}
-                formatter={(value: number) => [`${value.toFixed(1)}%`]}
+                formatter={(value, name) => {
+                  if (name === "Alignment") return `${value.toFixed(0)}%`;
+                  return value;
+                }}
               />
               <Line
+                yAxisId="left"
                 type="monotone"
                 dataKey="alignment"
-                stroke="#8884d8"
+                stroke="#3B82F6"
                 dot={false}
                 name="Alignment"
               />
               <Line
+                yAxisId="right"
                 type="monotone"
                 dataKey="groupCount"
-                stroke="#82ca9d"
+                stroke="#22C55E"
                 dot={false}
                 name="Groups"
               />
