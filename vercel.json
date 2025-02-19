@@ -1,11 +1,12 @@
 {
-  "buildCommand": "npm run build",
-  "framework": "vite",
-  "installCommand": "npm install",
-  "builds": [
+  "routes": [
     {
-      "src": "package.json",
-      "use": "@vercel/node"
+      "src": "/(.*)",
+      "dest": "/"
     }
-  ]
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "installCommand": "npm install"
 }
