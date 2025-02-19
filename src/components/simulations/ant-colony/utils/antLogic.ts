@@ -66,18 +66,13 @@ function sense(ant: Ant, grid: Grid, settings: AntColonySettings) {
     ) {
       const cell = grid[gridY][gridX];
 
-      // Ignore home pheromones when too close to nest
-      const distanceToNest = distance(ant.position, {
-        x: grid[0].length / 2,
-        y: grid.length / 2,
-      });
-      const nearNest = distanceToNest < settings.sensorDistance * 0.5;
-
       // Calculate pheromone value based on ant state
       let pheromoneValue = 0;
       if (ant.hasFood) {
-        pheromoneValue = nearNest ? 0 : cell.homePheromone;
+        // When carrying food, follow home pheromones
+        pheromoneValue = cell.homePheromone;
       } else {
+        // When searching for food, follow food pheromones
         pheromoneValue = cell.foodPheromone;
       }
 
@@ -117,11 +112,10 @@ function calculateNewDirection(
   // Find the strongest pheromone reading
   const maxPheromone = Math.max(...sensors.map((s) => s.pheromone));
 
-  // Follow pheromone trail with weighted steering
+  // Stronger pheromone influence
   const weightedDirection = sensors.reduce((sum, sensor) => {
-    // Stronger influence from higher pheromone concentrations
-    const weight = sensor.pheromone / (maxPheromone || 1);
-    return sum + sensor.angle * weight * settings.pheromoneStrength;
+    const weight = Math.pow(sensor.pheromone / (maxPheromone || 1), 2); // Quadratic weighting
+    return sum + sensor.angle * weight * settings.pheromoneStrength * 2;
   }, 0);
 
   // When ant has food, bias movement towards nest
@@ -132,32 +126,28 @@ function calculateNewDirection(
       grid[0].length / 2 - ant.position.x
     );
     const directionDiff = normalizeAngle(nestDirection - ant.direction);
-    homewardBias = directionDiff * 0.5; // Bias towards nest
+    homewardBias = directionDiff * 0.7;
   }
 
-  // Reduce random movement when following strong trails or carrying food
-  const randomScale = maxPheromone > 0.5 || ant.hasFood ? 0.1 : 1;
+  // Much less random movement when on strong trails
+  const randomScale = maxPheromone > 0.3 ? 0.02 : 0.6;
   const randomness = (Math.random() - 0.5) * Math.PI * 0.5 * randomScale;
 
-  // Combine all components with adjusted weights
   let newDirection = ant.direction;
 
   if (ant.hasFood) {
-    // Prioritize going home when has food
+    // Strong home bias when carrying food
     newDirection +=
-      homewardBias * 0.5 + weightedDirection * 0.3 + randomness * 0.2;
+      homewardBias * 0.7 + weightedDirection * 0.25 + randomness * 0.05;
   } else if (maxPheromone > 0.2) {
-    // Follow strong pheromone trails
-    newDirection += weightedDirection * 0.6 + randomness * 0.4;
+    // Very strong trail following
+    newDirection += weightedDirection * 0.9 + randomness * 0.1;
   } else {
-    // Explore when no strong trails
+    // More exploration when no strong trails
     newDirection += weightedDirection * 0.3 + randomness * 0.7;
   }
 
-  // Add obstacle avoidance
   newDirection += obstacleAvoidance;
-
-  // Normalize direction
   return normalizeAngle(newDirection);
 }
 
@@ -242,19 +232,22 @@ export function addPheromone(
     const newGrid = [...grid];
     const cell = newGrid[y][x];
 
-    // Increase pheromone amount based on distance from nest
     const distanceFromNest = distance(position, {
       x: grid[0].length / 2,
       y: grid.length / 2,
     });
-    const distanceScale = Math.min(1, distanceFromNest / 20); // Scale up with distance
-    const pheromoneAmount =
-      type === "food" ? amount * distanceScale : amount * 1.5 * distanceScale;
+    const distanceScale = Math.min(1, distanceFromNest / 20);
 
     if (type === "home") {
-      cell.homePheromone = Math.min(2, cell.homePheromone + pheromoneAmount);
+      cell.homePheromone = Math.min(
+        3, // Increased max pheromone level
+        cell.homePheromone + amount * distanceScale
+      );
     } else {
-      cell.foodPheromone = Math.min(2, cell.foodPheromone + pheromoneAmount);
+      cell.foodPheromone = Math.min(
+        4, // Higher max level for food pheromones
+        cell.foodPheromone + amount * 2 * distanceScale
+      );
     }
     return newGrid;
   }

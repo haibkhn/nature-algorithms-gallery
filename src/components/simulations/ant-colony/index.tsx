@@ -20,7 +20,7 @@ const DEFAULT_SETTINGS: AntColonySettings = {
   type: "ant-colony",
   numberOfAnts: 50,
   pheromoneStrength: 1.0,
-  pheromoneEvaporation: 0.005, // Reduced evaporation rate
+  pheromoneEvaporation: 0.005,
   antSpeed: 1.0,
   sensorDistance: 20,
   sensorAngle: Math.PI / 4,
@@ -165,25 +165,35 @@ const AntColony: React.FC = () => {
       const updatedAnts = currentAnts.map((ant) => {
         const updatedAnt = updateAnt(ant, grid, food, settings);
 
-        // Add pheromones based on ant state
-        if (updatedAnt.hasFood) {
-          setGrid((prev) =>
-            addPheromone(
-              prev,
-              updatedAnt.position,
-              "home",
-              settings.pheromoneStrength
-            )
-          );
-        } else {
-          setGrid((prev) =>
-            addPheromone(
-              prev,
-              updatedAnt.position,
-              "food",
-              settings.pheromoneStrength
-            )
-          );
+        // Lay stronger pheromones when food is found
+        if (updatedAnt.hasFood !== ant.hasFood || updatedAnt.hasFood) {
+          if (updatedAnt.hasFood && !ant.hasFood) {
+            // When food is first found, lay a very strong food pheromone trail
+            // This will strongly attract other ants to this successful path
+            const backtrackPath = [...ant.path].reverse();
+            backtrackPath.forEach((pos, index) => {
+              setGrid((prev) =>
+                addPheromone(
+                  prev,
+                  pos,
+                  "food",
+                  settings.pheromoneStrength *
+                    3 *
+                    (1 - index / backtrackPath.length)
+                )
+              );
+            });
+          } else if (updatedAnt.hasFood) {
+            // When returning with food, lay home pheromone
+            setGrid((prev) =>
+              addPheromone(
+                prev,
+                updatedAnt.position,
+                "home",
+                settings.pheromoneStrength * 1.5
+              )
+            );
+          }
         }
 
         return updatedAnt;
