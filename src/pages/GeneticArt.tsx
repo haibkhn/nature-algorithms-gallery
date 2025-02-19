@@ -125,7 +125,9 @@ const GeneticArt: React.FC = () => {
           break;
       }
 
-      setGenerator(newGenerator);
+      if (newGenerator) {
+        setGenerator(newGenerator);
+      }
     };
     img.src = originalImage;
   };

@@ -1,5 +1,7 @@
+// src/pages/Simulations.tsx
 import React, { useState } from "react";
 import GameOfLife from "../components/simulations/game-of-life";
+import Boids from "../components/simulations/boids";
 
 interface Simulation {
   title: string;
@@ -18,9 +20,9 @@ const SIMULATIONS: Record<string, Simulation> = {
   },
   flocking: {
     title: "Flocking Simulation",
-    description: "Birds flocking behavior simulation (Coming Soon)",
-    component: null,
-    tags: ["Swarm", "Movement"],
+    description: "Birds flocking behavior based on simple rules",
+    component: Boids,
+    tags: ["Swarm", "Movement", "Emergence"],
   },
   antColony: {
     title: "Ant Colony",
